@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c2340">
+  <title>IT Xperts Business Assistant</title>
+  <script src="/config.js"></script>
+  <script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+    const root = document.getElementById("root");
+    const backend = window.ITX_SUPABASE;
+    const supabase = createClient(backend.url, backend.anonKey, { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+    const businessTypes = ["Shop", "Restaurant or food business", "Salon or personal care", "Pharmacy", "Repair or professional service", "Other"];
+    let mode = "signin";
+    let activeUser = null;
+    let activeProfile = null;
+
+    function safe(value) {
+      return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
+    }
+    function setNotice(message, kind = "info") {
+      const el = document.getElementById("notice");
+      if (!el) return;
+      el.className = `notice ${kind}`;
+      el.textContent = message;
+      el.hidden = !message;
+    }
+    function authScreen() {
+      root.innerHTML = `<main class="auth-wrap"><section class="auth-card">
+        <a class="brand" href="/" aria-label="IT Xperts home"><span class="brand-mark">IT</span><span><b>IT Xperts</b><small>Business Assistant</small></span></a>
+        <h1 id="auth-title">${mode === "signup" ? "Create your account" : mode === "reset" ? "Reset your password" : "Welcome back"}</h1>
+        <p class="lead">${mode === "signup" ? "Create an account, then set up your business." : mode === "reset" ? "We’ll email you a secure password reset link." : "Sign in to open your business workspace."}</p>
+        <div id="tabs" class="tabs" ${mode === "reset" ? "hidden" : ""}>
+          <button type="button" class="${mode === "signin" ? "selected" : ""}" data-mode="signin">Sign in</button>
+          <button type="button" class="${mode === "signup" ? "selected" : ""}" data-mode="signup">Sign up</button>
+        </div>
+        <div id="notice" class="notice" role="status" hidden></div>
+        <form id="auth-form" novalidate>
+          <label for="email">Email address</label>
+          <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
+          ${mode === "reset" ? "" : `<label for="password">Password</label>
+          <div class="password-wrap"><input id="password" name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" ${mode === "signup" ? "minlength=8" : ""} required><button class="reveal" type="button" aria-label="Show password" aria-pressed="false">Show</button></div>
+          <p class="password-hint" ${mode === "signup" ? "" : "hidden"}>Use a new, unique password. A password manager can generate a strong one.</p>
+          ${mode === "signin" ? `<button type="button" id="forgot" class="text-button">Forgot password?</button>` : ""}`}
+          <button id="submit" class="primary" type="submit">${mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in"}</button>
+        </form>
+        <p class="fineprint"><b>Business data protection.</b> Business records are saved to your signed-in account with access limited to that account. Keep your password private and sign out on shared devices. You can download a copy or restore a previous saved version in Settings.</p>
+      </section></main>`;
+
+      document.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => {
+        mode = button.dataset.mode;
+        authScreen();
+      }));
+      const reveal = document.querySelector(".reveal");
+      reveal?.addEventListener("click", () => {
+        const input = document.getElementById("password");
+        const visible = input.type === "password";
+        input.type = visible ? "text" : "password";
+        reveal.textContent = visible ? "Hide" : "Show";
+        reveal.setAttribute("aria-label", visible ? "Hide password" : "Show password");
+        reveal.setAttribute("aria-pressed", String(visible));
+        input.focus();
+      });
+      document.getElementById("forgot")?.addEventListener("click", async () => {
+        const email = document.getElementById("email").value.trim();
+        if (!email) { setNotice("Enter your account email first.", "error"); document.getElementById("email").focus(); return; }
+        const button = document.getElementById("forgot");
+        button.disabled = true;
+        const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: location.origin });
+        button.disabled = false;
+        setNotice(error ? error.message : "If that email has an account, a password reset link is on its way.", error ? "error" : "success");
+      });
+      document.getElementById("auth-form").addEventListener("submit", submitAuth);
+    }
+
+    async function submitAuth(event) {
+      event.preventDefault();
+      setNotice("");
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password")?.value ?? "";
+      const button = document.getElementById("submit");
+      button.disabled = true;
+      button.textContent = "Please wait…";
+      let result;
+      if (mode === "signup") {
+        if (password.length < 8) { button.disabled = false; button.textContent = "Create account"; return setNotice("Use at least 8 characters. If it is still rejected as weak, choose a longer, unique password.", "error"); }
+        result = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: location.origin } });
+        button.disabled = false;
+        button.textContent = "Create account";
+        if (result.error) return setNotice(result.error.message, "error");
+        if (result.data.session) return loadWorkspace(result.data.user);
+        mode = "signin";
+        authScreen();
+        setNotice("Account created. Check your email and confirm your address, then sign in with the same email and password.", "success");
+        return;
+      }
+      result = await supabase.auth.signInWithPassword({ email, password });
+      button.disabled = false;
+      button.textContent = "Sign in";
+      if (result.error) return setNotice(result.error.message === "Invalid login credentials" ? "We couldn’t sign you in. Check the email and password used when you created the account. If you’ve forgotten the password, use “Forgot password?”." : result.error.message, "error");
+      await loadWorkspace(result.data.user);
+    }
+
+    async function loadWorkspace(user) {
+      activeUser = user;
+      root.innerHTML = `<div class="loading">Opening your business workspace…</div>`;
+      let { data: profile, error } = await supabase.from("profiles").select("business_name,business_type,business_type_note,sales_mode,setup_completed").eq("id", user.id).maybeSingle();
+      if (error) { authScreen(); return setNotice("Your sign-in worked, but we couldn’t load your account details. Please try again.", "error"); }
+      if (!profile) {
+        const created = await supabase.from("profiles").insert({ id: user.id }).select("business_name,business_type,business_type_note,sales_mode,setup_completed").single();
+        if (created.error) { authScreen(); return setNotice("Your account is ready, but business setup could not be opened. Please sign out and try again.", "error"); }
+        profile = created.data;
+      }
+      activeProfile = profile;
+      const firstSetup = !profile.setup_completed;
+      root.innerHTML = `<main class="workspace"><header class="workspace-head"><b>IT Xperts Business Assistant</b><button id="signout" type="button">Sign out</button></header><iframe id="app" title="IT Xperts Business Assistant workspace" src="/prototype/index.html?ws=${encodeURIComponent(user.id)}${firstSetup ? "&onboarding=1" : ""}"></iframe></main>`;
+      const frame = document.getElementById("app");
+      frame.addEventListener("load", () => sendProfile());
+      document.getElementById("signout").addEventListener("click", async () => {
+        const sync = frame.contentDocument?.getElementById("syncStatus")?.textContent ?? "";
+        if (sync && !/All changes saved|Saved to your account/i.test(sync) && !confirm("Some business records may still be waiting to save. Sign out anyway?")) return;
+        await supabase.auth.signOut();
+      });
+    }
+
+    function sendProfile() {
+      const frame = document.getElementById("app");
+      if (!activeUser || !frame?.contentWindow) return;
+      frame.contentWindow.postMessage({ type: "itx-profile", accountEmail: activeUser.email ?? "", businessName: activeProfile?.business_name, businessType: activeProfile?.business_type, businessTypeNote: activeProfile?.business_type_note ?? "", mode: activeProfile?.sales_mode }, location.origin);
+    }
+
+    function replyToWorkspace(message) {
+      document.getElementById("app")?.contentWindow?.postMessage(message, location.origin);
+    }
+
+    function validWorkspaceData(data) {
+      if (!data || typeof data !== "object" || Array.isArray(data)) return false;
+      try { return new TextEncoder().encode(JSON.stringify(data)).length <= 1048576; }
+      catch { return false; }
+    }
+
+    async function recentWorkspaceBackups(userId) {
+      return supabase.from("business_workspace_backups")
+        .select("id,created_at,reason")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false })
+        .limit(30);
+    }
+
+    async function workspaceBackupHasRecords(userId, backupId) {
+      if (!backupId) return false;
+      const { data, error } = await supabase.from("business_workspace_backups")
+        .select("data")
+        .eq("user_id", userId)
+        .eq("id", backupId)
+        .maybeSingle();
+      if (error) return null;
+      const saved = data?.data;
+      return ["sales", "expenses", "items", "invoices"].some(key => Array.isArray(saved?.[key]) && saved[key].length > 0)
+        || Object.values(saved?.netWorth ?? {}).some(value => Number(value) > 0);
+    }
+
+    async function saveWorkspaceRecords(data, requestId) {
+      if (!activeUser || !validWorkspaceData(data)) {
+        return replyToWorkspace({ type: "itx-records-saved", requestId, error: "The records could not be saved. Please try again." });
+      }
+      const { data: saved, error } = await supabase.from("business_workspaces")
+        .upsert({ user_id: activeUser.id, data, updated_at: new Date().toISOString() }, { onConflict: "user_id" })
+        .select("updated_at")
+        .single();
+      if (error) {
+        const protectedConflict = /Workspace save rejected/.test(error.message ?? "");
+        return replyToWorkspace({
+          type: "itx-records-saved",
+          requestId,
+          protectedConflict,
+          error: protectedConflict
+            ? "To protect older records, these changes were not saved. Reload the page to load the saved records before making more changes."
+            : "Your latest changes could not reach secure storage. Keep this page open and retry when connected."
+        });
+      }
+      const backups = await recentWorkspaceBackups(activeUser.id);
+      replyToWorkspace({ type: "itx-records-saved", requestId, savedAt: saved.updated_at, backups: backups.error ? [] : backups.data });
+    }
+
+    window.addEventListener("message", async event => {
+      const frame = document.getElementById("app");
+      if (event.origin !== location.origin || event.source !== frame?.contentWindow || !activeUser || !event.data) return;
+      const { type, requestId } = event.data;
+
+      if (type === "itx-sign-out") {
+        await supabase.auth.signOut();
+        return;
+      }
+
+      if (type === "itx-records-load") {
+        const { data: workspace, error } = await supabase.from("business_workspaces")
+          .select("data,updated_at")
+          .eq("user_id", activeUser.id)
+          .maybeSingle();
+        if (error) return replyToWorkspace({ type: "itx-records-loaded", error: "Secure record storage is not ready. Please retry in a moment." });
+        const backups = await recentWorkspaceBackups(activeUser.id);
+        if (backups.error) return replyToWorkspace({ type: "itx-records-loaded", error: "Record recovery storage is not ready. Please retry in a moment." });
+        let latestBackupHasRecords = false;
+        if (workspace && backups.data?.length) {
+          latestBackupHasRecords = await workspaceBackupHasRecords(activeUser.id, backups.data[0].id);
+          if (latestBackupHasRecords === null) return replyToWorkspace({ type: "itx-records-loaded", error: "The latest recovery copy could not be checked. Please retry in a moment." });
+        }
+        replyToWorkspace({ type: "itx-records-loaded", data: workspace?.data ?? null, savedAt: workspace?.updated_at ?? null, backups: backups.data ?? [], latestBackupHasRecords });
+        return;
+      }
+
+      if (type === "itx-records-save") {
+        return saveWorkspaceRecords(event.data.data, requestId);
+      }
+
+      if (type === "itx-records-restore") {
+        const backupId = String(event.data.backupId ?? "");
+        if (!/^\d+$/.test(backupId)) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "That recovery copy could not be found." });
+        const { data: backup, error } = await supabase.from("business_workspace_backups")
+          .select("data")
+          .eq("user_id", activeUser.id)
+          .eq("id", backupId)
+          .maybeSingle();
+        if (error || !backup) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "That recovery copy could not be opened." });
+        const { data: currentWorkspace, error: currentError } = await supabase.from("business_workspaces")
+          .select("user_id")
+          .eq("user_id", activeUser.id)
+          .maybeSingle();
+        if (currentError) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "Your current workspace could not be checked. No records were changed." });
+        if (currentWorkspace) {
+          const { error: snapshotError } = await supabase.rpc("save_business_workspace_before_restore");
+          if (snapshotError) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "Your current records could not be protected before restore. No records were changed." });
+        }
+        const { data: saved, error: saveError } = await supabase.from("business_workspaces")
+          .upsert({ user_id: activeUser.id, data: backup.data, updated_at: new Date().toISOString() }, { onConflict: "user_id" })
+          .select("updated_at")
+          .single();
+        if (saveError) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "The recovery copy could not be restored. Your current records are still available." });
+        const latest = await recentWorkspaceBackups(activeUser.id);
+        replyToWorkspace({ type: "itx-records-restored", requestId, data: backup.data, savedAt: saved.updated_at, backups: latest.error ? [] : latest.data });
+        return;
+      }
+
+      if (type !== "itx-setup-saved") return;
+      const { businessName, businessType, businessTypeNote, mode: salesMode } = event.data;
+      if (!String(businessName ?? "").trim() || !businessTypes.includes(businessType)) return;
+      const update = { business_name: String(businessName).trim().slice(0, 80), business_type: businessType, business_type_note: businessType === "Other" ? String(businessTypeNote ?? "").slice(0, 120) : null, sales_mode: salesMode === "daily" ? "daily" : "individual", setup_completed: true, updated_at: new Date().toISOString() };
+      const { error } = await supabase.from("profiles").update(update).eq("id", activeUser.id);
+      if (error) alert("Business setup could not be saved to your account. Please try again.");
+      else activeProfile = { ...activeProfile, ...update };
+    });
+
+    function recoveryScreen(session) {
+      mode = "new-password";
+      root.innerHTML = `<main class="auth-wrap"><section class="auth-card"><a class="brand" href="/"><span class="brand-mark">IT</span><span><b>IT Xperts</b><small>Business Assistant</small></span></a><h1>Choose a new password</h1><p class="lead">Make it unique and at least 8 characters.</p><div id="notice" class="notice" role="status" hidden></div><form id="new-password-form"><label for="new-password">New password</label><div class="password-wrap"><input id="new-password" type="password" autocomplete="new-password" minlength="8" required><button class="reveal" type="button" aria-label="Show password" aria-pressed="false">Show</button></div><button class="primary" type="submit">Save new password</button></form></section></main>`;
+      document.querySelector(".reveal").addEventListener("click", event => { const input = document.getElementById("new-password"); const visible = input.type === "password"; input.type = visible ? "text" : "password"; event.currentTarget.textContent = visible ? "Hide" : "Show"; event.currentTarget.setAttribute("aria-label", visible ? "Hide password" : "Show password"); });
+      document.getElementById("new-password-form").addEventListener("submit", async e => { e.preventDefault(); const password = document.getElementById("new-password").value; const submit = e.currentTarget.querySelector("button.primary"); submit.disabled = true; const { error } = await supabase.auth.updateUser({ password }); submit.disabled = false; if (error) return setNotice(error.message, "error"); setNotice("Password updated. Opening your workspace…", "success"); await loadWorkspace(session.user); });
+    }
+
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") { activeUser = null; activeProfile = null; mode = "signin"; authScreen(); }
+      if (event === "PASSWORD_RECOVERY" && session) recoveryScreen(session);
+    });
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (location.hash.includes("type=recovery")) {
+      if (sessionData.session) recoveryScreen(sessionData.session);
+      else { authScreen(); setNotice("This reset link is invalid or expired. Request a new password reset link.", "error"); }
+    } else if (sessionData.session) await loadWorkspace(sessionData.session.user);
+    else authScreen();
+  </script>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#152a40;background:#f1f6fa;font-synthesis:none;text-rendering:optimizeLegibility}*{box-sizing:border-box}body{margin:0;min-height:100vh}.auth-wrap{min-height:100vh;display:grid;place-items:center;padding:28px 16px;background:radial-gradient(ellipse at top,#e2f3f2,#f1f6fa 48%)}.auth-card{width:min(100%,440px);padding:32px;background:#fff;border:1px solid #dce6ed;border-radius:22px;box-shadow:0 18px 55px #153b5714}.brand{display:flex;align-items:center;gap:12px;margin-bottom:27px;color:inherit;text-decoration:none}.brand-mark{width:45px;height:45px;display:grid;place-items:center;border-radius:13px;background:#102c4a;color:#fff;font-weight:850;font-size:18px}.brand b,.brand small{display:block}.brand b{font-size:17px}.brand small{margin-top:2px;color:#667b8d;font-size:12px}.auth-card h1{margin:0;font-size:27px;letter-spacing:-.025em}.lead{margin:7px 0 21px;color:#63778a;font-size:14px;line-height:1.5}.tabs{display:grid;grid-template-columns:1fr 1fr;background:#edf3f7;padding:4px;border-radius:10px;margin:0 0 20px}.tabs button{border:0;border-radius:8px;background:none;padding:10px;color:#5c7182;font-weight:650;cursor:pointer}.tabs button.selected{color:#152a40;background:#fff;box-shadow:0 1px 5px #142d4014}label{display:block;font-size:13px;font-weight:650;margin:15px 0 7px}input{width:100%;height:46px;border:1px solid #cddae3;border-radius:9px;padding:0 12px;font:inherit;color:#152a40;outline:none}input:focus{border-color:#128d92;box-shadow:0 0 0 3px #128d921c}.password-wrap{position:relative}.password-wrap input{padding-right:72px}.reveal{position:absolute;right:7px;top:6px;height:34px;min-width:54px;border:0;border-radius:7px;background:#eaf2f5;color:#24475d;font-weight:650;cursor:pointer}.primary{width:100%;height:47px;margin-top:22px;border:0;border-radius:9px;background:#102c4a;color:#fff;font:inherit;font-weight:700;cursor:pointer}.primary:disabled{opacity:.65}.fineprint,.password-hint{font-size:11px;line-height:1.55;color:#697d8d}.fineprint{margin:22px 0 0}.password-hint{margin:7px 0 0}.text-button{display:block;margin:10px 0 -7px auto;border:0;background:none;color:#16696d;font-size:12px;font-weight:650;cursor:pointer}.text-button:disabled{opacity:.5}.notice{margin:0 0 15px;padding:11px 12px;border-radius:9px;font-size:13px;line-height:1.45}.notice[hidden]{display:none}.notice.info{background:#eff4f7;color:#324c60}.notice.success{background:#e8f7f1;color:#16553a}.notice.error{background:#fff0ed;color:#9d3025}.workspace{height:100dvh;display:flex;flex-direction:column}.workspace-head{height:45px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 12px;background:#102c4a;color:#fff;font-size:12px}.workspace-head button{border:1px solid #ffffff70;border-radius:7px;background:transparent;padding:5px 10px;color:#fff;font:inherit;cursor:pointer}.workspace iframe{width:100%;flex:1;min-height:0;border:0}.loading{min-height:100vh;display:grid;place-items:center;color:#50677b;font-size:14px}@media(max-width:520px){.auth-card{padding:24px 20px;border-radius:18px}.auth-card h1{font-size:24px}}
+  </style>
+</head>
+<body><div id="root"><div class="loading">Loading IT Xperts…</div></div></body>
+</html>
+
