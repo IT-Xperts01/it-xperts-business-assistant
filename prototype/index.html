@@ -23,26 +23,32 @@
   .sync-gate{max-width:760px;margin:8vh auto;padding:26px}.sync-gate h1{margin:0;color:var(--navy);font-size:24px}.sync-gate>p{color:var(--muted);font-size:14px;line-height:1.6}.sync-choices{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:20px}.sync-choices article{border:1px solid var(--line);border-radius:12px;padding:16px}.sync-choices h2{margin:0;font-size:16px}.sync-choices p{color:var(--muted);font-size:13px}.sync-choices .btn{width:100%}#syncStatus[data-state="error"]{color:#b42318;font-weight:700}#syncStatus[data-state="ok"]{color:#31715a}@media(max-width:640px){.sync-gate{margin:4vh auto;padding:18px}.sync-choices{grid-template-columns:1fr}}
 </style>
 <style>
-  /* Larger supporting text and controls for easier reading, including on phones. */
-  body{font-size:16px;line-height:1.5}
-  .brand small{font-size:12px}.nav-label{font-size:12px}.nav button{font-size:16px}.side-bottom{font-size:14px}
-  .crumb{font-size:14px}.profile b{font-size:15px}.profile small{font-size:13px}
-  .greeting p,.page-title p{font-size:15px}.date{font-size:14px}
-  .metric-top{font-size:15px}.metric small{font-size:13px}
-  .btn{font-size:15px}.btn.small{font-size:14px}
-  .panel-head h2{font-size:17px}.panel-head a{font-size:14px}
-  .item b,.stock-alert b{font-size:15px}.item small,.stock-alert small,.stock-alert em{font-size:13px}
-  .tip b{font-size:15px}.tip span{font-size:14px}
-  .field label{font-size:14px}.segmented button{font-size:14px}
-  .table th{font-size:12px;letter-spacing:.4px}.table td{font-size:14px}
-  .pill{font-size:12px}.empty{font-size:15px}.bar-col small{font-size:13px}
-  .answer{font-size:15px}.switch button{font-size:13px}.modal-head h2{font-size:20px}.toast{font-size:15px}
-  .prototype-notice{font-size:14px}.prototype-notice b{font-size:13px}
-  .mobile-nav button{font-size:12px;line-height:1.2}
-  #view p{font-size:max(14px,.9em)!important;line-height:1.55}
-  #view small{font-size:13px!important;line-height:1.45}
-  .sync-gate h1{font-size:26px}.sync-gate>p{font-size:16px}.sync-choices h2{font-size:18px}.sync-choices p{font-size:15px}
-  @media(max-width:640px){.table th,.table td{font-size:13px}.metric-top{font-size:14px}.mobile-nav button{font-size:12px}}
+  /* Clear type hierarchy, stronger secondary-text contrast, and larger touch targets. */
+  :root{--muted:#4f6578}
+  body{font-size:18px;line-height:1.55}
+  .brand strong{font-size:18px}.brand small{font-size:13px;letter-spacing:1.2px}
+  .nav-label{font-size:13px;letter-spacing:1.3px}.nav button{min-height:48px;font-size:16px}
+  .side-bottom{font-size:14px}
+  .crumb,.date{font-size:15px}.profile b{font-size:16px}.profile small{font-size:14px}
+  .greeting h1,.page-title h1{font-size:30px;line-height:1.2}.greeting p,.page-title p{font-size:16px;line-height:1.55}
+  .metric{padding:21px}.metric-top{font-size:16px;line-height:1.35}.metric strong{font-size:30px;line-height:1.2}.metric small{font-size:15px}
+  .btn{min-height:48px;padding:12px 17px;font-size:16px}.btn.small{min-height:42px;padding:9px 12px;font-size:14px}
+  .panel{padding:22px}.panel-head h2{font-size:18px}.panel-head a{font-size:15px}
+  .item b,.stock-alert b{font-size:16px}.item small,.stock-alert small,.stock-alert em{font-size:15px;line-height:1.45}
+  .tip b{font-size:16px}.tip span{font-size:15px;line-height:1.55}
+  .field label{font-size:16px}.field{gap:8px}.field input,.field select{min-height:50px;padding:12px 14px;font-size:17px}
+  .segmented button{min-height:44px;padding:10px 15px;font-size:15px}
+  .table th{font-size:13px;letter-spacing:.4px;color:#4f6578}.table td{font-size:15px;line-height:1.45}
+  .pill{font-size:13px}.empty{font-size:16px;line-height:1.55}.bar-col small{font-size:14px}
+  .answer{font-size:16px;line-height:1.55}.switch button{min-height:46px;font-size:14px}.modal-head h2{font-size:21px}.toast{font-size:16px}
+  .prototype-notice{font-size:16px;line-height:1.55}.prototype-notice b{font-size:14px;letter-spacing:.03em}
+  .mobile-nav button{min-height:48px;padding:6px 3px;font-size:13px;line-height:1.25}
+  #view p{font-size:max(16px,.9em)!important;line-height:1.6}
+  #view small{font-size:15px!important;line-height:1.5}
+  .sync-gate h1{font-size:28px}.sync-gate>p{font-size:17px;line-height:1.65}.sync-choices h2{font-size:19px}.sync-choices p{font-size:16px;line-height:1.55}
+  .table{letter-spacing:0}.table th,.table td{padding:14px 9px}
+  @media(max-width:900px){.content{padding:28px 24px}.metric{padding:18px}}
+  @media(max-width:640px){.content{padding:24px 16px 108px}.greeting h1,.page-title h1{font-size:27px}.metric{padding:16px 14px}.metric-top{font-size:15px}.metric strong{font-size:25px}.table th,.table td{font-size:14px;padding:13px 7px}.mobile-nav button{font-size:13px}.panel{padding:18px}.btn{min-height:48px}.page-title{gap:14px}}
 </style>
 </head>
 <body>
