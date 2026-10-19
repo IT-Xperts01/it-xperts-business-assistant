@@ -73,13 +73,18 @@ module.exports = async function handler(req, res) {
         payment_reference: reference
       })
     });
+    const responseBody = await insertResponse.json().catch(() => ({}));
     if (insertResponse.status === 409) {
+      const databaseMessage = String(responseBody.message || "");
+      if (databaseMessage.includes("voice_sales_payment_requests_reference_key")) {
+        return json(res, 409, { error: "This transfer reference has already been submitted. Contact IT Xperts if you need help." });
+      }
       return json(res, 409, { error: "You already have a payment reference waiting for review." });
     }
     if (!insertResponse.ok) {
       return json(res, 503, { error: "Your payment reference could not be saved. Please try again later." });
     }
-    const rows = await insertResponse.json().catch(() => []);
+    const rows = responseBody;
     return json(res, 201, { status: "pending", requestId: rows?.[0]?.id || null });
   } catch {
     return json(res, 503, { error: "The payment service could not be reached. Please try again." });
