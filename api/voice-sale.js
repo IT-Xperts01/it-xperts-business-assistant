@@ -7,6 +7,12 @@ function json(res, status, body) {
   res.end(JSON.stringify(body));
 }
 
+function rateLimited(res, upstreamResponse) {
+  const retryAfter = upstreamResponse.headers.get("retry-after");
+  if (retryAfter && /^\\d+$/.test(retryAfter)) res.setHeader("Retry-After", retryAfter);
+  return json(res, 429, { error: "The voice service has reached its current usage limit. Please wait and try again, or enter the sale manually." });
+}
+
 function cleanProducts(value) {
   if (!Array.isArray(value) || value.length > 100) throw new Error("invalid_products");
   return value.map(item => {
@@ -99,6 +105,7 @@ module.exports = async function handler(req, res) {
       headers: { Authorization: "Bearer " + groqApiKey },
       body: form
     });
+    if (transcriptionResponse.status === 429) return rateLimited(res, transcriptionResponse);
     if (!transcriptionResponse.ok) return json(res, 502, { error: "The recording could not be understood. Please try again or enter the sale manually." });
     const result = await transcriptionResponse.json();
     transcript = String(result.text || "").trim().slice(0, MAX_TRANSCRIPT_CHARS);
@@ -141,6 +148,7 @@ module.exports = async function handler(req, res) {
         max_completion_tokens: 450
       })
     });
+    if (parseResponse.status === 429) return rateLimited(res, parseResponse);
     if (!parseResponse.ok) return json(res, 502, { error: "The sale draft could not be prepared. Please try again or enter the sale manually." });
     const completion = await parseResponse.json();
     const content = completion.choices?.[0]?.message?.content;
