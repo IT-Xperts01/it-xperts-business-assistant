@@ -16,6 +16,15 @@
     let mode = "signin";
     let activeUser = null;
     let activeProfile = null;
+    let authEmailDraft = "";
+    try { authEmailDraft = sessionStorage.getItem("itx-auth-email") || ""; } catch {}
+    function rememberAuthEmail(value) {
+      authEmailDraft = String(value ?? "").trim();
+      try {
+        if (authEmailDraft) sessionStorage.setItem("itx-auth-email", authEmailDraft);
+        else sessionStorage.removeItem("itx-auth-email");
+      } catch {}
+    }
 
     function safe(value) {
       return String(value ?? "").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
@@ -28,28 +37,22 @@
       el.hidden = !message;
     }
     function authScreen() {
-      root.innerHTML = `<main class="auth-wrap"><section class="auth-card">
-        <a class="brand" href="/" aria-label="IT Xperts home"><span class="brand-mark">IT</span><span><b>IT Xperts</b><small>Business Assistant</small></span></a>
-        <h1 id="auth-title">${mode === "signup" ? "Create your account" : mode === "reset" ? "Reset your password" : "Welcome back"}</h1>
-        <p class="lead">${mode === "signup" ? "Create an account, then set up your business." : mode === "reset" ? "We’ll email you a secure password reset link." : "Sign in to open your business workspace."}</p>
-        <div id="tabs" class="tabs" ${mode === "reset" ? "hidden" : ""}>
-          <button type="button" class="${mode === "signin" ? "selected" : ""}" data-mode="signin">Sign in</button>
-          <button type="button" class="${mode === "signup" ? "selected" : ""}" data-mode="signup">Sign up</button>
-        </div>
-        <div id="notice" class="notice" role="status" hidden></div>
-        <form id="auth-form" novalidate>
-          <label for="email">Email address</label>
-          <input id="email" name="email" type="email" autocomplete="email" required placeholder="you@example.com">
-          ${mode === "reset" ? "" : `<label for="password">Password</label>
-          <div class="password-wrap"><input id="password" name="password" type="password" autocomplete="${mode === "signup" ? "new-password" : "current-password"}" ${mode === "signup" ? "minlength=8" : ""} required><button class="reveal" type="button" aria-label="Show password" aria-pressed="false">Show</button></div>
-          <p class="password-hint" ${mode === "signup" ? "" : "hidden"}>Use a new, unique password. A password manager can generate a strong one.</p>
-          ${mode === "signin" ? `<button type="button" id="forgot" class="text-button">Forgot password?</button>` : ""}`}
-          <button id="submit" class="primary" type="submit">${mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in"}</button>
-        </form>
-        <p class="fineprint"><b>Business data protection.</b> Business records are saved to your signed-in account with access limited to that account. Keep your password private and sign out on shared devices. You can download a copy or restore a previous saved version in Settings.</p>
-      </section></main>`;
+      const confirming = mode === "confirm";
+      const title = mode === "signup" ? "Create your account" : mode === "reset" ? "Reset your password" : confirming ? "Confirm your email" : "Welcome back";
+      const lead = mode === "signup" ? "Create an account, then set up your business." : mode === "reset" ? "We’ll email you a secure password reset link." : confirming ? "One quick step before you can sign in." : "Sign in to open your business workspace.";
+      const confirmationMarkup = confirming
+        ? '<section class="confirmation-panel"><div class="confirmation-mark" aria-hidden="true">✉</div><h2>Check your email</h2><p>If this address needs verification, a link is on its way to <b>' + safe(authEmailDraft) + '</b>.</p><ol><li>Check your inbox and spam folder.</li><li>Open the newest IT Xperts confirmation email and tap its link.</li><li>Return here and sign in with the same email and password.</li></ol><p class="confirmation-help">Already confirmed or already have an account? Go to sign in. If you forgot your password, use “Forgot password?”</p><button id="resend-confirmation" class="primary" type="button">Resend confirmation email</button><button id="confirmed-signin" class="text-button" type="button">I’ve confirmed — go to sign in</button></section>'
+        : "";
+      const tabsMarkup = '<div id="tabs" class="tabs" ' + ((mode === "reset" || confirming) ? "hidden" : "") + '><button type="button" class="' + (mode === "signin" ? "selected" : "") + '" data-mode="signin">Sign in</button><button type="button" class="' + (mode === "signup" ? "selected" : "") + '" data-mode="signup">Sign up</button></div>';
+      const passwordMarkup = mode === "reset" ? "" : '<label for="password">Password</label><div class="password-wrap"><input id="password" name="password" type="password" autocomplete="' + (mode === "signup" ? "new-password" : "current-password") + '" ' + (mode === "signup" ? "minlength=8" : "") + ' required><button class="reveal" type="button" aria-label="Show password" aria-pressed="false">Show</button></div><p class="password-hint" ' + (mode === "signup" ? "" : "hidden") + '>Use a new, unique password. A password manager can generate a strong one.</p>' + (mode === "signin" ? '<button type="button" id="forgot" class="text-button">Forgot password?</button>' : "");
+      const submitLabel = mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in";
+      const backMarkup = mode === "reset" ? '<button type="button" id="back-signin" class="text-button">Back to sign in</button>' : "";
+      root.innerHTML = '<main class="auth-wrap"><section class="auth-card"><a class="brand" href="/" aria-label="IT Xperts home"><span class="brand-mark">IT</span><span><b>IT Xperts</b><small>Business Assistant</small></span></a><h1 id="auth-title">' + title + '</h1><p class="lead">' + lead + '</p>' + tabsMarkup + '<div id="notice" class="notice" role="status" hidden></div>' + confirmationMarkup + '<form id="auth-form" novalidate ' + (confirming ? "hidden" : "") + '><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" value="' + safe(authEmailDraft) + '" required placeholder="you@example.com">' + passwordMarkup + '<button id="submit" class="primary" type="submit">' + submitLabel + '</button>' + backMarkup + '</form><p class="fineprint" ' + (confirming ? "hidden" : "") + '><b>Business data protection.</b> Business records are saved to your signed-in account with access limited to that account. Keep your password private and sign out on shared devices. You can download a copy or restore a previous saved version in Settings.</p></section></main>';
 
+      const emailInput = document.getElementById("email");
+      emailInput?.addEventListener("input", () => rememberAuthEmail(emailInput.value));
       document.querySelectorAll("[data-mode]").forEach(button => button.addEventListener("click", () => {
+        if (emailInput) rememberAuthEmail(emailInput.value);
         mode = button.dataset.mode;
         authScreen();
       }));
@@ -66,19 +69,49 @@
       document.getElementById("forgot")?.addEventListener("click", async () => {
         const email = document.getElementById("email").value.trim();
         if (!email) { setNotice("Enter your account email first.", "error"); document.getElementById("email").focus(); return; }
+        rememberAuthEmail(email);
         const button = document.getElementById("forgot");
         button.disabled = true;
         const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: location.origin });
         button.disabled = false;
-        setNotice(error ? error.message : "If that email has an account, a password reset link is on its way.", error ? "error" : "success");
+        setNotice(error ? readableAuthError(error) : "If that email has an account, a password reset link is on its way.", error ? "error" : "success");
       });
-      document.getElementById("auth-form").addEventListener("submit", submitAuth);
+      document.getElementById("resend-confirmation")?.addEventListener("click", async event => {
+        const button = event.currentTarget;
+        button.disabled = true;
+        button.textContent = "Sending…";
+        const { error } = await supabase.auth.resend({ type: "signup", email: authEmailDraft, options: { emailRedirectTo: location.origin } });
+        button.disabled = false;
+        button.textContent = "Resend confirmation email";
+        setNotice(error ? readableAuthError(error) : "If this address still needs confirmation, another link is on its way. Check your inbox and spam folder, then open the newest link.", error ? "error" : "success");
+      });
+      document.getElementById("confirmed-signin")?.addEventListener("click", () => {
+        mode = "signin";
+        authScreen();
+        setNotice("Sign in with the same email and password you used to create the account.", "info");
+      });
+      document.getElementById("back-signin")?.addEventListener("click", () => {
+        mode = "signin";
+        authScreen();
+      });
+      document.getElementById("auth-form")?.addEventListener("submit", submitAuth);
+    }
+
+    function readableAuthError(error) {
+      const message = String(error?.message ?? "Something went wrong. Please try again.");
+      if (error?.code === "weak_password" || /weak password/i.test(message)) {
+        const reasons = Array.isArray(error?.reasons) ? error.reasons.join(", ") : "";
+        return reasons ? "Choose a stronger password: " + reasons + ". Try a longer, unique passphrase." : "Choose a longer, unique password. Try at least 12 characters with a mix of letters, numbers, or symbols.";
+      }
+      if (/rate.?limit|too many requests/i.test(message)) return "Too many emails were requested. Wait a little while, then try again and check your spam folder.";
+      return message;
     }
 
     async function submitAuth(event) {
       event.preventDefault();
       setNotice("");
       const email = document.getElementById("email").value.trim();
+      rememberAuthEmail(email);
       const password = document.getElementById("password")?.value ?? "";
       const button = document.getElementById("submit");
       button.disabled = true;
@@ -89,17 +122,28 @@
         result = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: location.origin } });
         button.disabled = false;
         button.textContent = "Create account";
-        if (result.error) return setNotice(result.error.message, "error");
-        if (result.data.session) return loadWorkspace(result.data.user);
-        mode = "signin";
+        if (result.error) return setNotice(readableAuthError(result.error), "error");
+        if (result.data.session) {
+          rememberAuthEmail("");
+          return loadWorkspace(result.data.user);
+        }
+        mode = "confirm";
         authScreen();
-        setNotice("Account created. Check your email and confirm your address, then sign in with the same email and password.", "success");
+        setNotice("Your account is ready for email confirmation. Follow the steps below, then sign in.", "success");
         return;
       }
       result = await supabase.auth.signInWithPassword({ email, password });
       button.disabled = false;
       button.textContent = "Sign in";
-      if (result.error) return setNotice(result.error.message === "Invalid login credentials" ? "We couldn’t sign you in. Check the email and password used when you created the account. If you’ve forgotten the password, use “Forgot password?”." : result.error.message, "error");
+      if (result.error) {
+        if (/email not confirmed|email_not_confirmed/i.test(String(result.error.message ?? ""))) {
+          mode = "confirm";
+          authScreen();
+          return setNotice("This account needs email confirmation before sign-in. Check your inbox or spam folder, or request a fresh link below.", "error");
+        }
+        return setNotice(result.error.message === "Invalid login credentials" ? "We couldn’t sign you in. Check the email and password used when you created the account. If you’ve forgotten the password, use “Forgot password?”. " : readableAuthError(result.error), "error");
+      }
+      rememberAuthEmail("");
       await loadWorkspace(result.data.user);
     }
 
@@ -281,6 +325,15 @@
     .primary{min-height:52px;height:auto;font-size:17px}.fineprint,.password-hint{font-size:14px;line-height:1.6}.text-button{font-size:15px;min-height:40px}.notice{font-size:15px;line-height:1.55}
     .workspace-head{height:50px;font-size:15px;padding:0 16px}.workspace-head button{min-height:40px}.loading{font-size:17px}
     @media(max-width:520px){.auth-card{padding:28px 24px}.auth-card h1{font-size:27px}.lead{font-size:16px}}</style>
+<style>
+    .confirmation-panel{margin-top:14px;padding:20px;border:1px solid #d5e3e8;border-radius:14px;background:#f5fafb}
+    .confirmation-mark{width:42px;height:42px;display:grid;place-items:center;margin-bottom:12px;border-radius:50%;background:#e3f3ef;color:#176750;font-size:22px}
+    .confirmation-panel h2{margin:0 0 8px;font-size:20px;color:#152a40}
+    .confirmation-panel p,.confirmation-panel li{font-size:15px;line-height:1.6;color:#536b7c}
+    .confirmation-panel ol{padding-left:22px;margin:12px 0}
+    .confirmation-panel .confirmation-help{font-size:13px}
+    .confirmation-panel .primary{margin-top:8px}
+    </style>
 </head>
 <body><div id="root"><div class="loading">Loading IT Xperts…</div></div></body>
 </html>
