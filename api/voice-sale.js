@@ -162,6 +162,7 @@ module.exports = async function handler(req, res) {
   if (!quantity) missing.push("the quantity");
   if (!amount) missing.push("the amount received");
   if (!paymentMethod) missing.push("the payment method");
+  if (paymentMethod === "Other" && !paymentNote) missing.push("details for the payment method");
   const clarification = String(draft.clarification || "").trim().slice(0, 240) || (missing.length ? "Please confirm " + missing.join(", ") + "." : "");
   return json(res, 200, {
     transcript,
