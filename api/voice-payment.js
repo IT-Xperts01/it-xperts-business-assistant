@@ -118,6 +118,7 @@ async function processCharge(env, data) {
   const metadataUserId = metadata.itx_user_id || metadata.user_id;
   let userId = typeof metadataUserId === "string" && USER_ID_PATTERN.test(metadataUserId) ? metadataUserId : null;
   const code = subscriptionCode(data);
+  if (metadata.itx_feature === "voice_sales" && metadata.itx_plan_code && metadata.itx_plan_code !== env.planCode) return;
   if (metadata.itx_feature !== "voice_sales") userId = null;
 
   if (!userId && code) userId = await lookupEntitlementBySubscription(env, code);
