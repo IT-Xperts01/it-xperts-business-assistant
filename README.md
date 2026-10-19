@@ -19,22 +19,20 @@ The app will not open the business workspace if it cannot load and confirm recov
 
 ## Paid voice sales — ₦5,000/month
 
-Voice sales is optional and disabled until Paystack confirms the user's first successful payment. Each recording prepares a draft for the sale form; the user must review and press **Save sale** before it enters business records. The browser asks for consent before sending audio and product names and prices to Groq through IT Xperts.
+Voice sales is optional. Customers pay manually by bank transfer and submit the bank reference in the app. IT Xperts must check the transfer before approving access. Approval gives one month of voice sales; renewals are reviewed the same way. There is no automatic charge or automatic payment confirmation. The voice recording still creates a draft; the user reviews it and presses **Save sale** before it enters business records. Audio and product names and prices are sent to Groq through IT Xperts only after the user consents.
 
-1. Create a Paystack plan named **IT Xperts Voice Sales** with amount **₦5,000 NGN**, interval **monthly**, and unlimited billing cycles. Use the live plan for production and a separate test plan for preview testing. Paystack recurring subscriptions use card and Nigerian direct debit authorizations.
-2. Run `supabase/voice_sales_entitlements.sql` in the connected Supabase SQL Editor. It safely adds expiry and Paystack subscription fields to the existing entitlement table while keeping row-level security in place. Run this before deploying the code.
-3. Add these server-side variables in the Vercel project. Keep them out of `config.js` and chat:
-   - `PAYSTACK_SECRET_KEY`: the Paystack secret key for the selected mode.
-   - `PAYSTACK_VOICE_PLAN_CODE`: the plan code for the ₦5,000 monthly plan.
-   - `PAYSTACK_EXPECTED_DOMAIN`: `live` for production or `test` for preview.
-   - `ITX_SITE_URL`: the HTTPS site address users open, such as `https://www.itxperts.group`.
-   - `SUPABASE_SERVICE_ROLE_KEY`: the connected Supabase service-role key; Vercel server functions use it to write payment entitlements. Never expose this key in browser files.
-   - Keep the existing `GROQ_API_KEY`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY` settings for voice processing.
-4. Deploy the Git-connected project so Vercel publishes the API routes. In the Paystack dashboard, set the webhook URL to `https://www.itxperts.group/api/voice-payment`. Paystack signs each webhook with HMAC SHA-512; the server validates the signature before updating records.
-5. Verify a test payment in Paystack test mode, then switch the Vercel Production environment to the live secret key and live plan code. A verified checkout return enables access immediately; signed `charge.success` webhooks extend access after renewals. `subscription.disable` webhooks turn access off. The app gives a 3-day payment grace period after each scheduled renewal date.
-6. Users can select **Manage plan** in Sales to update payment details or cancel through Paystack. The app retains access through the paid period and grace period. Paystack does not retry a failed subscription charge; users should update payment details during the grace period.
+1. Run supabase/voice_sales_entitlements.sql in the connected Supabase SQL Editor. It adds a row-level secured payment-request table and an approval function. Signed-in users can submit and view only their own requests; they cannot approve themselves.
+2. Add these public payment-display settings in Vercel for Production:
+   - VOICE_SALES_BANK_NAME: the receiving bank name.
+   - VOICE_SALES_ACCOUNT_NAME: the receiving account name.
+   - VOICE_SALES_ACCOUNT_NUMBER: the 10-digit receiving account number.
+   - VOICE_SALES_SUPPORT_CONTACT: optional contact details for payment questions.
+   These details are shown to signed-in users in the payment screen. Do not put secret keys in these variables.
+3. Keep the existing SUPABASE_URL, SUPABASE_ANON_KEY, and GROQ_API_KEY settings for account storage and voice processing. No payment-provider API key is used.
+4. When a customer submits a transfer reference, check the bank account yourself. In the Supabase SQL Editor, list pending requests with the query at the bottom of supabase/voice_sales_entitlements.sql. After verifying a transfer, run select public.approve_voice_sales_payment_request('REQUEST_UUID_HERE'). This activates voice sales for one month, extending an existing paid period if the customer renews early. Reject an invalid reference by setting its request status to rejected.
+5. Access expires automatically unless IT Xperts verifies and approves another monthly payment.
 
-The server checks the signed-in user and a current entitlement on every voice request. It does not write audio or transcripts to business records. A failed or unverified payment does not enable voice sales.
+
 ## Deploy
 
 1. Run the required workspace storage SQL in the Supabase project connected to this site.
