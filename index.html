@@ -157,8 +157,10 @@
         if (created.error) { authScreen(); return setNotice("Your account is ready, but business setup could not be opened. Please sign out and try again.", "error"); }
         profile = created.data;
       }
-      const { data: voiceEntitlement, error: voiceEntitlementError } = await supabase.from("voice_sales_entitlements").select("enabled").eq("user_id", user.id).maybeSingle();
-      profile.voice_sales_enabled = !voiceEntitlementError && voiceEntitlement?.enabled === true;
+      const { data: voiceEntitlement, error: voiceEntitlementError } = await supabase.from("voice_sales_entitlements").select("enabled,expires_at").eq("user_id", user.id).maybeSingle();
+      const voiceSalesExpiry = voiceEntitlement?.expires_at ? Date.parse(voiceEntitlement.expires_at) : Infinity;
+      profile.voice_sales_enabled = !voiceEntitlementError && voiceEntitlement?.enabled === true && voiceSalesExpiry > Date.now();
+      profile.voice_sales_expires_at = voiceEntitlement?.expires_at ?? null;
       activeProfile = profile;
       const firstSetup = !profile.setup_completed;
       root.innerHTML = `<main class="workspace"><header class="workspace-head"><b>IT Xperts Business Assistant</b><button id="signout" type="button">Sign out</button></header><iframe id="app" title="IT Xperts Business Assistant workspace" src="/prototype/index.html?ws=${encodeURIComponent(user.id)}${firstSetup ? "&onboarding=1" : ""}"></iframe></main>`;
@@ -174,7 +176,7 @@
     function sendProfile() {
       const frame = document.getElementById("app");
       if (!activeUser || !frame?.contentWindow) return;
-      frame.contentWindow.postMessage({ type: "itx-profile", accountEmail: activeUser.email ?? "", businessName: activeProfile?.business_name, businessType: activeProfile?.business_type, businessTypeNote: activeProfile?.business_type_note ?? "", mode: activeProfile?.sales_mode, voiceSalesEnabled: activeProfile?.voice_sales_enabled === true }, location.origin);
+      frame.contentWindow.postMessage({ type: "itx-profile", accountEmail: activeUser.email ?? "", businessName: activeProfile?.business_name, businessType: activeProfile?.business_type, businessTypeNote: activeProfile?.business_type_note ?? "", mode: activeProfile?.sales_mode, voiceSalesEnabled: activeProfile?.voice_sales_enabled === true, voiceSalesExpiresAt: activeProfile?.voice_sales_expires_at ?? null, voicePaymentNotice: new URLSearchParams(location.search).get("voice_payment") || "" }, location.origin);
     }
 
     function replyToWorkspace(message) {
@@ -238,6 +240,34 @@
 
       if (type === "itx-sign-out") {
         await supabase.auth.signOut();
+        return;
+      }
+
+      if (type === "itx-voice-subscribe") {
+        const sendPaymentError = error => replyToWorkspace({ type: "itx-voice-subscription-result", requestId, error });
+        if (!requestId || typeof requestId !== "string" || requestId.length > 100) return sendPaymentError("The subscription request could not be verified.");
+        const action = event.data.action === "manage" ? "manage" : "subscribe";
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        if (sessionError || !session?.access_token || session.user?.id !== activeUser.id) return sendPaymentError("Your sign-in needs to be refreshed. Please sign out and back in, then try again.");
+        try {
+          const response = await fetch("/api/voice-subscription", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token },
+            body: JSON.stringify({ action })
+          });
+          const result = await response.json().catch(() => ({}));
+          if (!response.ok) return sendPaymentError(typeof result.error === "string" ? result.error.slice(0, 240) : "The subscription request could not be completed.");
+          if (action === "manage") {
+            const manageUrl = new URL(result.managementUrl);
+            if (manageUrl.protocol !== "https:" || !["paystack.com", "www.paystack.com"].includes(manageUrl.hostname)) return sendPaymentError("Paystack returned an invalid management link.");
+            return replyToWorkspace({ type: "itx-voice-subscription-result", requestId, managementUrl: manageUrl.toString() });
+          }
+          const checkoutUrl = new URL(result.authorizationUrl);
+          if (checkoutUrl.protocol !== "https:" || checkoutUrl.hostname !== "checkout.paystack.com") return sendPaymentError("Paystack returned an invalid checkout link.");
+          location.assign(checkoutUrl.toString());
+        } catch {
+          sendPaymentError("The payment service could not be reached. Please try again.");
+        }
         return;
       }
 
