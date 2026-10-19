@@ -1,6 +1,6 @@
 # IT Xperts Business Assistant — Vercel deployment
 
-The site uses a static browser app and Vercel Node serverless functions for features that need a protected API key. Supabase handles authentication, business profiles, and workspace records. The browser uses only the Supabase publishable key in `config.js`; never add an OpenAI key, Supabase secret, or service-role key to website files.
+The site uses a static browser app and Vercel Node serverless functions for features that need a protected API key. Supabase handles authentication, business profiles, and workspace records. The browser uses only the Supabase publishable key in `config.js`; never add a Groq API key, OpenAI API key, Supabase secret, or service-role key to website files.
 
 ## Required Supabase setup
 
@@ -19,14 +19,14 @@ The app will not open the business workspace if it cannot load and confirm recov
 
 ## Paid voice sales
 
-Voice sales is optional and disabled for every account until IT Xperts enables it after payment. Each recording prepares a draft for the existing sale form; the user must review and press **Save sale** before it is added to business records. The browser asks for consent before recording and tells the user that the audio and product names and prices are sent to OpenAI through IT Xperts for processing.
+Voice sales is optional and disabled for every account until IT Xperts enables it after payment. Each recording prepares a draft for the existing sale form; the user must review and press **Save sale** before it is added to business records. The browser asks for consent before recording and tells the user that the audio and product names and prices are sent to Groq through IT Xperts for processing.
 
 1. Run `supabase/voice_sales_entitlements.sql` in the Supabase SQL Editor. It creates a row-level secured entitlement table. Users can read their own entitlement; only an administrator can enable accounts.
-2. In the Vercel project, add server-side environment variables `OPENAI_API_KEY`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY`. Use the OpenAI API key and the connected Supabase project URL and publishable/anon key. Set the variables for Production and Preview as needed. Never use the Supabase service-role key.
+2. In the Vercel project, add server-side environment variables `GROQ_API_KEY`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY`. Use the Groq API key and the connected Supabase project URL and publishable/anon key. Set the variables for Production and Preview as needed. Never use the Supabase service-role key.
 3. Deploy this repository through its Vercel Git connection so Vercel publishes the `api/voice-sale.js` function alongside the website. A static ZIP upload does not provide this API route.
 4. After payment, an administrator can enable the specific Supabase Auth user by following the SQL comment at the bottom of `supabase/voice_sales_entitlements.sql`.
 
-The API verifies the signed-in user and paid entitlement on every request. It does not write audio or transcripts to the business workspace. OpenAI API usage is billed to the account that owns the API key.
+The API verifies the signed-in user and paid entitlement on every request. It does not write audio or transcripts to the business workspace. Groq free-tier usage is subject to per-model minute, daily, and audio-duration limits shared by the Groq organization. Requests beyond those limits are blocked until the relevant quota resets; higher limits require opting into a paid tier. Check the [Groq rate limits](https://console.groq.com/docs/rate-limits) for the current account caps.
 
 ## Deploy
 
