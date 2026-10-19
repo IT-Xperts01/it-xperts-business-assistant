@@ -176,7 +176,7 @@
     function sendProfile() {
       const frame = document.getElementById("app");
       if (!activeUser || !frame?.contentWindow) return;
-      frame.contentWindow.postMessage({ type: "itx-profile", accountEmail: activeUser.email ?? "", businessName: activeProfile?.business_name, businessType: activeProfile?.business_type, businessTypeNote: activeProfile?.business_type_note ?? "", mode: activeProfile?.sales_mode, voiceSalesEnabled: activeProfile?.voice_sales_enabled === true, voiceSalesExpiresAt: activeProfile?.voice_sales_expires_at ?? null, voicePaymentNotice: new URLSearchParams(location.search).get("voice_payment") || "" }, location.origin);
+      frame.contentWindow.postMessage({ type: "itx-profile", accountEmail: activeUser.email ?? "", businessName: activeProfile?.business_name, businessType: activeProfile?.business_type, businessTypeNote: activeProfile?.business_type_note ?? "", mode: activeProfile?.sales_mode, voiceSalesEnabled: activeProfile?.voice_sales_enabled === true, voiceSalesExpiresAt: activeProfile?.voice_sales_expires_at ?? null,  }, location.origin);
     }
 
     function replyToWorkspace(message) {
@@ -243,30 +243,24 @@
         return;
       }
 
-      if (type === "itx-voice-subscribe") {
-        const sendPaymentError = error => replyToWorkspace({ type: "itx-voice-subscription-result", requestId, error });
-        if (!requestId || typeof requestId !== "string" || requestId.length > 100) return sendPaymentError("The subscription request could not be verified.");
-        const action = event.data.action === "manage" ? "manage" : "subscribe";
+      if (type === "itx-voice-payment-request") {
+        const sendPaymentResult = (error, status) => replyToWorkspace({ type: "itx-voice-payment-request-result", requestId, error, status });
+        if (!requestId || typeof requestId !== "string" || requestId.length > 100) return sendPaymentResult("The payment request could not be verified.");
+        const reference = String(event.data.reference || "").trim();
+        if (!reference || reference.length > 120) return sendPaymentResult("Enter a valid transfer reference.");
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.access_token || session.user?.id !== activeUser.id) return sendPaymentError("Your sign-in needs to be refreshed. Please sign out and back in, then try again.");
+        if (sessionError || !session?.access_token || session.user?.id !== activeUser.id) return sendPaymentResult("Your sign-in needs to be refreshed. Please sign out and back in, then try again.");
         try {
           const response = await fetch("/api/voice-subscription", {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token },
-            body: JSON.stringify({ action })
+            body: JSON.stringify({ action: "request", reference })
           });
           const result = await response.json().catch(() => ({}));
-          if (!response.ok) return sendPaymentError(typeof result.error === "string" ? result.error.slice(0, 240) : "The subscription request could not be completed.");
-          if (action === "manage") {
-            const manageUrl = new URL(result.managementUrl);
-            if (manageUrl.protocol !== "https:" || !["paystack.com", "www.paystack.com"].includes(manageUrl.hostname)) return sendPaymentError("Paystack returned an invalid management link.");
-            return replyToWorkspace({ type: "itx-voice-subscription-result", requestId, managementUrl: manageUrl.toString() });
-          }
-          const checkoutUrl = new URL(result.authorizationUrl);
-          if (checkoutUrl.protocol !== "https:" || checkoutUrl.hostname !== "checkout.paystack.com") return sendPaymentError("Paystack returned an invalid checkout link.");
-          location.assign(checkoutUrl.toString());
+          if (!response.ok) return sendPaymentResult(typeof result.error === "string" ? result.error.slice(0, 240) : "The payment reference could not be submitted.");
+          replyToWorkspace({ type: "itx-voice-payment-request-result", requestId, status: result.status || "pending" });
         } catch {
-          sendPaymentError("The payment service could not be reached. Please try again.");
+          sendPaymentResult("The payment request could not be reached. Please try again.");
         }
         return;
       }
