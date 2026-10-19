@@ -28,7 +28,7 @@ create table if not exists public.voice_sales_payment_requests (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
   amount_ngn integer not null default 5000 check (amount_ngn = 5000),
-  payment_reference text not null check (length(payment_reference) between 4 and 120),
+  payment_reference text not null check (length(payment_reference) between 4 and 120 and payment_reference = btrim(payment_reference)),
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected')),
   submitted_at timestamptz not null default now(),
   reviewed_at timestamptz,
@@ -41,6 +41,9 @@ create index if not exists voice_sales_payment_requests_user_submitted_idx
 create unique index if not exists voice_sales_payment_requests_one_pending_per_user_key
   on public.voice_sales_payment_requests (user_id)
   where status = 'pending';
+
+create unique index if not exists voice_sales_payment_requests_reference_key
+  on public.voice_sales_payment_requests (lower(btrim(payment_reference)));
 
 alter table public.voice_sales_payment_requests enable row level security;
 revoke all on table public.voice_sales_payment_requests from anon, authenticated;
@@ -63,6 +66,7 @@ create policy "Users can submit their own voice sales payment requests"
     and amount_ngn = 5000
     and status = 'pending'
     and length(payment_reference) between 4 and 120
+    and payment_reference = btrim(payment_reference)
   );
 
 -- Run this from the Supabase SQL Editor only after checking the transfer in the business bank account.
