@@ -32,7 +32,7 @@ Voice sales is optional and disabled until Paystack confirms the user's first su
    - Keep the existing \`GROQ_API_KEY\`, \`SUPABASE_URL\`, and \`SUPABASE_ANON_KEY\` settings for voice processing.
 4. Deploy the Git-connected project so Vercel publishes the API routes. In the Paystack dashboard, set the webhook URL to \`https://www.itxperts.group/api/voice-payment\`. Paystack signs each webhook with HMAC SHA-512; the server validates the signature before updating records.
 5. Verify a test payment in Paystack test mode, then switch the Vercel Production environment to the live secret key and live plan code. A verified checkout return enables access immediately; signed \`charge.success\` webhooks extend access after renewals. \`subscription.disable\` webhooks turn access off. The app gives a 3-day payment grace period after each scheduled renewal date.
-6. Users can select **Manage plan** in Sales to update payment details or cancel through Paystack. The app retains access through the paid period and grace period.
+6. Users can select **Manage plan** in Sales to update payment details or cancel through Paystack. The app retains access through the paid period and grace period. Paystack does not retry a failed subscription charge; users should update payment details during the grace period.
 
 The server checks the signed-in user and a current entitlement on every voice request. It does not write audio or transcripts to business records. A failed or unverified payment does not enable voice sales.
 ## Deploy
