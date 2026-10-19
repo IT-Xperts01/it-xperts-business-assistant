@@ -1,12 +1,30 @@
--- IT Xperts paid voice sales entitlement
--- Apply this migration in the Supabase SQL editor for the IT Xperts project.
--- New accounts remain disabled until an administrator enables the paid feature.
+-- IT Xperts monthly voice sales subscription entitlement.
+-- Run this in the Supabase SQL Editor before deploying the payment integration.
+-- RLS lets each signed-in user read their own entitlement. Payment writes use the
+-- server-only Supabase service role key in Vercel; never put that key in browser code.
 
 create table if not exists public.voice_sales_entitlements (
   user_id uuid primary key references auth.users (id) on delete cascade,
   enabled boolean not null default false,
+  expires_at timestamptz,
+  paystack_subscription_code text,
+  paystack_customer_code text,
+  paystack_last_reference text,
+  paystack_last_paid_at timestamptz,
   updated_at timestamptz not null default now()
 );
+
+-- Upgrade existing installations that already have the original enabled flag table.
+alter table public.voice_sales_entitlements
+  add column if not exists expires_at timestamptz,
+  add column if not exists paystack_subscription_code text,
+  add column if not exists paystack_customer_code text,
+  add column if not exists paystack_last_reference text,
+  add column if not exists paystack_last_paid_at timestamptz;
+
+create unique index if not exists voice_sales_entitlements_paystack_subscription_code_key
+  on public.voice_sales_entitlements (paystack_subscription_code)
+  where paystack_subscription_code is not null;
 
 alter table public.voice_sales_entitlements enable row level security;
 
@@ -19,9 +37,3 @@ create policy "Users can read their own voice sales entitlement"
   for select
   to authenticated
   using (auth.uid() = user_id);
-
--- After payment, an administrator can enable an account from the Supabase SQL editor:
--- insert into public.voice_sales_entitlements (user_id, enabled)
--- values ('USER_UUID_HERE', true)
--- on conflict (user_id) do update
--- set enabled = excluded.enabled, updated_at = now();
