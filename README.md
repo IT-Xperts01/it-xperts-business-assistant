@@ -22,16 +22,16 @@ The app will not open the business workspace if it cannot load and confirm recov
 Voice sales is optional and disabled until Paystack confirms the user's first successful payment. Each recording prepares a draft for the sale form; the user must review and press **Save sale** before it enters business records. The browser asks for consent before sending audio and product names and prices to Groq through IT Xperts.
 
 1. Create a Paystack plan named **IT Xperts Voice Sales** with amount **₦5,000 NGN**, interval **monthly**, and unlimited billing cycles. Use the live plan for production and a separate test plan for preview testing. Paystack recurring subscriptions use card and Nigerian direct debit authorizations.
-2. Run \`supabase/voice_sales_entitlements.sql\` in the connected Supabase SQL Editor. It safely adds expiry and Paystack subscription fields to the existing entitlement table while keeping row-level security in place. Run this before deploying the code.
-3. Add these server-side variables in the Vercel project. Keep them out of \`config.js\` and chat:
-   - \`PAYSTACK_SECRET_KEY\`: the Paystack secret key for the selected mode.
-   - \`PAYSTACK_VOICE_PLAN_CODE\`: the plan code for the ₦5,000 monthly plan.
-   - \`PAYSTACK_EXPECTED_DOMAIN\`: \`live\` for production or \`test\` for preview.
-   - \`ITX_SITE_URL\`: the HTTPS site address users open, such as \`https://www.itxperts.group\`.
-   - \`SUPABASE_SERVICE_ROLE_KEY\`: the connected Supabase service-role key; Vercel server functions use it to write payment entitlements. Never expose this key in browser files.
-   - Keep the existing \`GROQ_API_KEY\`, \`SUPABASE_URL\`, and \`SUPABASE_ANON_KEY\` settings for voice processing.
-4. Deploy the Git-connected project so Vercel publishes the API routes. In the Paystack dashboard, set the webhook URL to \`https://www.itxperts.group/api/voice-payment\`. Paystack signs each webhook with HMAC SHA-512; the server validates the signature before updating records.
-5. Verify a test payment in Paystack test mode, then switch the Vercel Production environment to the live secret key and live plan code. A verified checkout return enables access immediately; signed \`charge.success\` webhooks extend access after renewals. \`subscription.disable\` webhooks turn access off. The app gives a 3-day payment grace period after each scheduled renewal date.
+2. Run `supabase/voice_sales_entitlements.sql` in the connected Supabase SQL Editor. It safely adds expiry and Paystack subscription fields to the existing entitlement table while keeping row-level security in place. Run this before deploying the code.
+3. Add these server-side variables in the Vercel project. Keep them out of `config.js` and chat:
+   - `PAYSTACK_SECRET_KEY`: the Paystack secret key for the selected mode.
+   - `PAYSTACK_VOICE_PLAN_CODE`: the plan code for the ₦5,000 monthly plan.
+   - `PAYSTACK_EXPECTED_DOMAIN`: `live` for production or `test` for preview.
+   - `ITX_SITE_URL`: the HTTPS site address users open, such as `https://www.itxperts.group`.
+   - `SUPABASE_SERVICE_ROLE_KEY`: the connected Supabase service-role key; Vercel server functions use it to write payment entitlements. Never expose this key in browser files.
+   - Keep the existing `GROQ_API_KEY`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY` settings for voice processing.
+4. Deploy the Git-connected project so Vercel publishes the API routes. In the Paystack dashboard, set the webhook URL to `https://www.itxperts.group/api/voice-payment`. Paystack signs each webhook with HMAC SHA-512; the server validates the signature before updating records.
+5. Verify a test payment in Paystack test mode, then switch the Vercel Production environment to the live secret key and live plan code. A verified checkout return enables access immediately; signed `charge.success` webhooks extend access after renewals. `subscription.disable` webhooks turn access off. The app gives a 3-day payment grace period after each scheduled renewal date.
 6. Users can select **Manage plan** in Sales to update payment details or cancel through Paystack. The app retains access through the paid period and grace period. Paystack does not retry a failed subscription charge; users should update payment details during the grace period.
 
 The server checks the signed-in user and a current entitlement on every voice request. It does not write audio or transcripts to business records. A failed or unverified payment does not enable voice sales.
