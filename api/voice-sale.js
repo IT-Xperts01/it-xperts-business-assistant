@@ -53,12 +53,13 @@ module.exports = async function handler(req, res) {
   let entitled = false;
   try {
     const entitlementResponse = await fetch(
-      supabaseUrl + "/rest/v1/voice_sales_entitlements?select=enabled&user_id=eq." + encodeURIComponent(user.id) + "&limit=1",
+      supabaseUrl + "/rest/v1/voice_sales_entitlements?select=enabled,expires_at&user_id=eq." + encodeURIComponent(user.id) + "&limit=1",
       { headers: { apikey: supabaseAnonKey, Authorization: "Bearer " + tokenMatch[1] } }
     );
     if (!entitlementResponse.ok) return json(res, 503, { error: "The paid voice feature could not be checked. Please try again later." });
     const rows = await entitlementResponse.json();
-    entitled = Array.isArray(rows) && rows[0]?.enabled === true;
+    const expiresAt = rows?.[0]?.expires_at ? Date.parse(rows[0].expires_at) : Infinity;
+    entitled = Array.isArray(rows) && rows[0]?.enabled === true && expiresAt > Date.now();
   } catch {
     return json(res, 503, { error: "The paid voice feature could not be checked. Please try again later." });
   }

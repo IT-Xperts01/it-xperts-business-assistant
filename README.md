@@ -17,16 +17,21 @@ The app will not open the business workspace if it cannot load and confirm recov
 - A recovery copy is created when the workspace is first saved and once per day when its records change. Before a restore, the app also saves the current version. The app lists up to 30 recent recovery copies; the database keeps older copies until an owner chooses a retention policy.
 - Business profiles remain in `public.profiles`; their existing row-level security policies are still required.
 
-## Paid voice sales
+## Paid voice sales — ₦5,000/month
 
-Voice sales is optional and disabled for every account until IT Xperts enables it after payment. Each recording prepares a draft for the existing sale form; the user must review and press **Save sale** before it is added to business records. The browser asks for consent before recording and tells the user that the audio and product names and prices are sent to Groq through IT Xperts for processing.
+Voice sales is optional. Customers pay manually by bank transfer and submit the bank reference in the app. IT Xperts must check the transfer before approving access. Approval gives one month of voice sales; renewals are reviewed the same way. There is no automatic charge or automatic payment confirmation. The voice recording still creates a draft; the user reviews it and presses **Save sale** before it enters business records. Audio and product names and prices are sent to Groq through IT Xperts only after the user consents.
 
-1. Run `supabase/voice_sales_entitlements.sql` in the Supabase SQL Editor. It creates a row-level secured entitlement table. Users can read their own entitlement; only an administrator can enable accounts.
-2. In the Vercel project, add server-side environment variables `GROQ_API_KEY`, `SUPABASE_URL`, and `SUPABASE_ANON_KEY`. Use the Groq API key and the connected Supabase project URL and publishable/anon key. Set the variables for Production and Preview as needed. Never use the Supabase service-role key.
-3. Deploy this repository through its Vercel Git connection so Vercel publishes the `api/voice-sale.js` function alongside the website. A static ZIP upload does not provide this API route.
-4. After payment, an administrator can enable the specific Supabase Auth user by following the SQL comment at the bottom of `supabase/voice_sales_entitlements.sql`.
+1. Run supabase/voice_sales_entitlements.sql in the connected Supabase SQL Editor. It adds a row-level secured payment-request table and an approval function. Signed-in users can submit and view only their own requests; they cannot approve themselves.
+2. Add these public payment-display settings in Vercel for Production:
+   - VOICE_SALES_BANK_NAME: the receiving bank name.
+   - VOICE_SALES_ACCOUNT_NAME: the receiving account name.
+   - VOICE_SALES_ACCOUNT_NUMBER: the 10-digit receiving account number.
+   - VOICE_SALES_SUPPORT_CONTACT: optional contact details for payment questions.
+   These details are shown to signed-in users in the payment screen. Do not put secret keys in these variables.
+3. Keep the existing SUPABASE_URL, SUPABASE_ANON_KEY, and GROQ_API_KEY settings for account storage and voice processing. No payment-provider API key is used.
+4. When a customer submits a transfer reference, check the bank account yourself. In the Supabase SQL Editor, list pending requests with the query at the bottom of supabase/voice_sales_entitlements.sql. After verifying a transfer, run select public.approve_voice_sales_payment_request('REQUEST_UUID_HERE'). This activates voice sales for one month, extending an existing paid period if the customer renews early. Reject an invalid reference by setting its request status to rejected.
+5. Access expires automatically unless IT Xperts verifies and approves another monthly payment.
 
-The API verifies the signed-in user and paid entitlement on every request. It does not write audio or transcripts to the business workspace. Groq free-tier usage is subject to per-model minute, daily, and audio-duration limits shared by the Groq organization. Requests beyond those limits are blocked until the relevant quota resets; higher limits require opting into a paid tier. Check the [Groq rate limits](https://console.groq.com/docs/rate-limits) for the current account caps.
 
 ## Deploy
 
