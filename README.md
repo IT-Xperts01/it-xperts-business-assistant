@@ -13,7 +13,7 @@ The app will not open the business workspace if it cannot load and confirm recov
 - Sales, expenses, products, invoices, and net-worth figures sync to one Supabase workspace row for the signed-in account.
 - Database row-level security checks the account ID for every workspace read or write. Recovery copies are readable by that account and are written by a database trigger.
 - The app keeps a temporary browser copy while a change is waiting to sync or when a save fails. It removes the copy after the cloud save succeeds. Use a password-protected device, and wait for the saved status before signing out or closing the page.
-- Settings lets each signed-in owner download a CSV of their own business details, sales, expenses, products and services, invoices, and net-worth figures. A JSON backup remains available for restoring records, alongside online recovery copies.
+- Settings lets each signed-in owner download a formatted Excel workbook of their own business records. It contains a performance overview with daily, monthly, yearly, and all-record totals, plus separate sales and expense ledgers, stock and services, invoices, and an estimated net-worth schedule. The automated summary is not an audited financial statement. A JSON backup remains available for restoring records, alongside online recovery copies.
 - A recovery copy is created when the workspace is first saved and once per day when its records change. Before a restore, the app also saves the current version. The app lists up to 30 recent recovery copies; the database keeps older copies until an owner chooses a retention policy.
 - Business profiles remain in `public.profiles`; their existing row-level security policies are still required.
 
