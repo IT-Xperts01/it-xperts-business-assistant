@@ -312,17 +312,17 @@
     const stockValue=items.reduce((total,item)=>item.type==='Product'&&item.stock!==null?total+number(item.stock)*number(item.costPrice):total,0);
     const cash=number((state.netWorth||{}).cash),receivables=number((state.netWorth||{}).receivables),equipment=number((state.netWorth||{}).equipment),liabilities=number((state.netWorth||{}).liabilities);
     const totalAssets=cash+stockValue+receivables+equipment,estimatedNetWorth=totalAssets-liabilities;
-    const salesGrid=[['IT XPERTS | SALES LEDGER'],['Chronological register of sales recorded in this business workspace'],['Basis: signed-in workspace · Amounts shown in Nigerian naira (NGN)'],[],['Date','Product / service or description','Payment method','Amount (NGN)','Reference / note'].map(value=>cell(value,4))];
+    const salesGrid=[[cell('IT XPERTS | SALES LEDGER',1)],[cell('Chronological register of sales recorded in this business workspace',2)],[cell('Basis: signed-in workspace · Amounts shown in Nigerian naira (NGN)',11)],[],['Date','Product / service or description','Payment method','Amount (NGN)','Reference / note'].map(value=>cell(value,4))];
     sales.forEach(record=>salesGrid.push([cell(dateValue(record.date),7),cell(record.description,5),cell(record.method,5),cell(record.amount,6),cell(record.note,5)]));
     const salesTotalRow=6+Math.max(1,sales.length),salesDataEnd=salesTotalRow-1;
     if(!sales.length)salesGrid.push([cell('No sales recorded',5),cell('',5),cell('',5),cell('',6),cell('',5)]);
     salesGrid.push([cell('TOTAL SALES',8),cell('',8),cell('',8),formula('SUM(D6:D'+salesDataEnd+')',saleTotal,9),cell('',8)]);
-    const expenseGrid=[['IT XPERTS | EXPENSE LEDGER'],['Chronological register of business expenses recorded in this workspace'],['Basis: signed-in workspace · Amounts shown in Nigerian naira (NGN)'],[],['Date','Description','Expense category','Amount (NGN)','Business note'].map(value=>cell(value,4))];
+    const expenseGrid=[[cell('IT XPERTS | EXPENSE LEDGER',1)],[cell('Chronological register of business expenses recorded in this workspace',2)],[cell('Basis: signed-in workspace · Amounts shown in Nigerian naira (NGN)',11)],[],['Date','Description','Expense category','Amount (NGN)','Business note'].map(value=>cell(value,4))];
     expenses.forEach(record=>expenseGrid.push([cell(dateValue(record.date),7),cell(record.description,5),cell(record.category,5),cell(record.amount,6),cell(record.note,5)]));
     const expenseTotalRow=6+Math.max(1,expenses.length),expenseDataEnd=expenseTotalRow-1;
     if(!expenses.length)expenseGrid.push([cell('No expenses recorded',5),cell('',5),cell('',5),cell('',6),cell('',5)]);
     expenseGrid.push([cell('TOTAL EXPENSES',8),cell('',8),cell('',8),formula('SUM(D6:D'+expenseDataEnd+')',expenseTotal,9),cell('',8)]);
-    const stockGrid=[['IT XPERTS | STOCK & SERVICES'],['Products are valued at recorded purchase cost; services do not carry stock value.'],['Amounts shown in Nigerian naira (NGN) · Quantities use the unit recorded in the app'],[],['Item','Type','Quantity on hand','Unit','Selling price (NGN)','Unit cost (NGN)','Stock value at cost (NGN)'].map(value=>cell(value,4))];
+    const stockGrid=[[cell('IT XPERTS | STOCK & SERVICES',1)],[cell('Products are valued at recorded purchase cost; services do not carry stock value.',2)],[cell('Amounts shown in Nigerian naira (NGN) · Quantities use the unit recorded in the app',11)],[],['Item','Type','Quantity on hand','Unit','Selling price (NGN)','Unit cost (NGN)','Stock value at cost (NGN)'].map(value=>cell(value,4))];
     items.forEach((item,index)=>{
       const excelRow=6+index,quantity=item.type==='Product'&&item.stock!==null?number(item.stock):'';
       const cost=item.type==='Product'?number(item.costPrice):'';
@@ -331,7 +331,7 @@
     const stockTotalRow=6+Math.max(1,items.length),stockDataEnd=stockTotalRow-1;
     if(!items.length)stockGrid.push([cell('No products or services recorded',5),cell('',5),cell('',5),cell('',5),cell('',6),cell('',6),cell('',6)]);
     stockGrid.push([cell('TOTAL STOCK AT COST',8),cell('',8),cell('',8),cell('',8),cell('',8),cell('',8),formula('SUM(G6:G'+stockDataEnd+')',stockValue,9)]);
-    const invoiceGrid=[['IT XPERTS | INVOICE REGISTER'],['Invoice amounts are listed by status; paid invoices are also represented in the sales ledger when recorded as paid.'],['Use the status and paid date to review outstanding customer balances.'],[],['Invoice no.','Date issued','Due date','Date paid','Customer','Description','Amount (NGN)','Status','Payment method','Note'].map(value=>cell(value,4))];
+    const invoiceGrid=[[cell('IT XPERTS | INVOICE REGISTER',1)],[cell('Invoice amounts are listed by status; paid invoices are also represented in the sales ledger when recorded as paid.',2)],[cell('Use the status and paid date to review outstanding customer balances.',11)],[],['Invoice no.','Date issued','Due date','Date paid','Customer','Description','Amount (NGN)','Status','Payment method','Note'].map(value=>cell(value,4))];
     invoices.forEach(invoice=>invoiceGrid.push([cell(invoice.number||'',5),cell(dateValue(invoice.createdDate||''),7),cell(dateValue(invoice.dueDate||''),7),cell(dateValue(invoice.paidDate||''),7),cell(invoice.customer||'',5),cell(invoice.description||'',5),cell(number(invoice.amount),6),cell(invoice.status||'',5),cell(invoice.paymentMethod||'',5),cell(invoice.note||'',5)]));
     const invoiceTotal=invoices.reduce((total,invoice)=>total+number(invoice.amount),0),invoiceTotalRow=6+Math.max(1,invoices.length),invoiceDataEnd=invoiceTotalRow-1;
     if(!invoices.length)invoiceGrid.push([cell('No invoices recorded',5),cell('',7),cell('',7),cell('',7),cell('',5),cell('',5),cell('',6),cell('',5),cell('',5),cell('',5)]);
