@@ -47,7 +47,7 @@
       const passwordMarkup = mode === "reset" ? "" : '<label for="password">Password</label><div class="password-wrap"><input id="password" name="password" type="password" autocomplete="' + (mode === "signup" ? "new-password" : "current-password") + '" ' + (mode === "signup" ? "minlength=8" : "") + ' required><button class="reveal" type="button" aria-label="Show password" aria-pressed="false">Show</button></div><p class="password-hint" ' + (mode === "signup" ? "" : "hidden") + '>Use a new, unique password. A password manager can generate a strong one.</p>' + (mode === "signin" ? '<button type="button" id="forgot" class="text-button">Forgot password?</button>' : "");
       const submitLabel = mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in";
       const backMarkup = mode === "reset" ? '<button type="button" id="back-signin" class="text-button">Back to sign in</button>' : "";
-      root.innerHTML = '<main class="auth-wrap"><section class="auth-card"><a class="brand" href="/" aria-label="IT Xperts home"><span class="brand-mark">IT</span><span><b>IT Xperts</b><small>Business Assistant</small></span></a><h1 id="auth-title">' + title + '</h1><p class="lead">' + lead + '</p>' + tabsMarkup + '<div id="notice" class="notice" role="status" hidden></div>' + confirmationMarkup + '<form id="auth-form" novalidate ' + (confirming ? "hidden" : "") + '><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" value="' + safe(authEmailDraft) + '" required placeholder="you@example.com">' + passwordMarkup + '<button id="submit" class="primary" type="submit">' + submitLabel + '</button>' + backMarkup + '</form><p class="fineprint" ' + (confirming ? "hidden" : "") + '><b>Business data protection.</b> Business records are saved to your signed-in account with access limited to that account. Keep your password private and sign out on shared devices. You can download a copy or restore a previous saved version in Settings.</p></section></main>';
+      root.innerHTML = '<main class="auth-wrap"><section class="auth-card"><a class="brand" href="/" aria-label="IT Xperts home"><span class="brand-mark">IT</span><span><b>IT Xperts</b><small>Business Assistant</small></span></a><h1 id="auth-title">' + title + '</h1><p class="lead">' + lead + '</p>' + tabsMarkup + '<div id="notice" class="notice" role="status" hidden></div>' + confirmationMarkup + '<form id="auth-form" novalidate ' + (confirming ? "hidden" : "") + '><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" value="' + safe(authEmailDraft) + '" required placeholder="you@example.com">' + passwordMarkup + '<button id="submit" class="primary" type="submit">' + submitLabel + '</button>' + backMarkup + '</form><p class="fineprint" ' + (confirming ? "hidden" : "") + '><b>Business data protection.</b> Business records are saved to your signed-in account with access limited to that account. Keep your password private and sign out on shared devices. You can download a copy or restore a previous saved version in Settings.</p><p class="fineprint"><b>Need help?</b> <a href="https://wa.me/2348036085433?text=Hi%20IT%20Xperts%2C%20I%20need%20help%20with%20the%20Business%20Assistant." target="_blank" rel="noopener noreferrer">Chat with IT Xperts on WhatsApp · +234 803 608 5433</a></p></section></main>';
 
       const emailInput = document.getElementById("email");
       emailInput?.addEventListener("input", () => rememberAuthEmail(emailInput.value));
@@ -334,7 +334,14 @@
     .confirmation-panel .confirmation-help{font-size:13px}
     .confirmation-panel .primary{margin-top:8px}
     </style>
-</head>
+<style>
+    body{font-size:17px;line-height:1.5}.brand b{font-size:18px}.brand small{font-size:13px}.auth-card h1{font-size:30px}
+    .lead{font-size:16px;line-height:1.6}.auth-card label{font-size:16px}.tabs button{min-height:46px;font-size:16px}
+    input{height:50px;padding:0 14px;font-size:17px}.password-wrap input{padding-right:82px}.reveal{min-width:64px;height:40px;font-size:15px}
+    .primary{min-height:52px;height:auto;font-size:17px}.fineprint,.password-hint{font-size:14px;line-height:1.6}.text-button{font-size:15px;min-height:40px}.notice{font-size:15px;line-height:1.55}
+    .workspace-head{height:50px;font-size:15px;padding:0 16px}.workspace-head button{min-height:40px}.loading{font-size:17px}
+    @media(max-width:520px){.auth-card{padding:28px 24px}.auth-card h1{font-size:27px}.lead{font-size:16px}}
+  </style></head>
 <body><div id="root"><div class="loading">Loading IT Xperts…</div></div></body>
 </html>
 
