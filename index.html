@@ -157,10 +157,6 @@
         if (created.error) { authScreen(); return setNotice("Your account is ready, but business setup could not be opened. Please sign out and try again.", "error"); }
         profile = created.data;
       }
-      const { data: voiceEntitlement, error: voiceEntitlementError } = await supabase.from("voice_sales_entitlements").select("enabled,expires_at").eq("user_id", user.id).maybeSingle();
-      const voiceSalesExpiry = voiceEntitlement?.expires_at ? Date.parse(voiceEntitlement.expires_at) : Infinity;
-      profile.voice_sales_enabled = !voiceEntitlementError && voiceEntitlement?.enabled === true && voiceSalesExpiry > Date.now();
-      profile.voice_sales_expires_at = voiceEntitlement?.expires_at ?? null;
       activeProfile = profile;
       const firstSetup = !profile.setup_completed;
       root.innerHTML = `<main class="workspace"><header class="workspace-head"><b>IT Xperts Business Assistant</b><button id="signout" type="button">Sign out</button></header><iframe id="app" title="IT Xperts Business Assistant workspace" src="/prototype/index.html?ws=${encodeURIComponent(user.id)}${firstSetup ? "&onboarding=1" : ""}"></iframe></main>`;
@@ -176,7 +172,7 @@
     function sendProfile() {
       const frame = document.getElementById("app");
       if (!activeUser || !frame?.contentWindow) return;
-      frame.contentWindow.postMessage({ type: "itx-profile", accountEmail: activeUser.email ?? "", businessName: activeProfile?.business_name, businessType: activeProfile?.business_type, businessTypeNote: activeProfile?.business_type_note ?? "", mode: activeProfile?.sales_mode, voiceSalesEnabled: activeProfile?.voice_sales_enabled === true, voiceSalesExpiresAt: activeProfile?.voice_sales_expires_at ?? null,  }, location.origin);
+      frame.contentWindow.postMessage({ type: "itx-profile", accountEmail: activeUser.email ?? "", businessName: activeProfile?.business_name, businessType: activeProfile?.business_type, businessTypeNote: activeProfile?.business_type_note ?? "", mode: activeProfile?.sales_mode }, location.origin);
     }
 
     function replyToWorkspace(message) {
@@ -240,51 +236,6 @@
 
       if (type === "itx-sign-out") {
         await supabase.auth.signOut();
-        return;
-      }
-
-      if (type === "itx-voice-payment-request") {
-        const sendPaymentResult = (error, status) => replyToWorkspace({ type: "itx-voice-payment-request-result", requestId, error, status });
-        if (!requestId || typeof requestId !== "string" || requestId.length > 100) return sendPaymentResult("The payment request could not be verified.");
-        const reference = String(event.data.reference || "").trim();
-        if (!reference || reference.length > 120) return sendPaymentResult("Enter a valid transfer reference.");
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.access_token || session.user?.id !== activeUser.id) return sendPaymentResult("Your sign-in needs to be refreshed. Please sign out and back in, then try again.");
-        try {
-          const response = await fetch("/api/voice-subscription", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token },
-            body: JSON.stringify({ action: "request", reference })
-          });
-          const result = await response.json().catch(() => ({}));
-          if (!response.ok) return sendPaymentResult(typeof result.error === "string" ? result.error.slice(0, 240) : "The payment reference could not be submitted.");
-          replyToWorkspace({ type: "itx-voice-payment-request-result", requestId, status: result.status || "pending" });
-        } catch {
-          sendPaymentResult("The payment request could not be reached. Please try again.");
-        }
-        return;
-      }
-
-      if (type === "itx-voice-sale-prepare") {
-        const sendVoiceError = error => replyToWorkspace({ type: "itx-voice-sale-result", requestId, error });
-        if (!requestId || typeof requestId !== "string" || requestId.length > 100) return sendVoiceError("The voice draft request could not be verified.");
-        if (activeProfile?.voice_sales_enabled !== true) return sendVoiceError("Voice sales is not enabled for this account.");
-        const { audioBase64, mimeType, products } = event.data;
-        if (typeof audioBase64 !== "string" || audioBase64.length > 2800000 || typeof mimeType !== "string" || !Array.isArray(products) || products.length > 100) return sendVoiceError("The recording could not be prepared. Please try a shorter recording.");
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError || !session?.access_token || session.user?.id !== activeUser.id) return sendVoiceError("Your sign-in needs to be refreshed. Please sign out and back in, then try again.");
-        try {
-          const response = await fetch("/api/voice-sale", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${session.access_token}` },
-            body: JSON.stringify({ audioBase64, mimeType, products })
-          });
-          const result = await response.json().catch(() => ({}));
-          if (!response.ok) return sendVoiceError(typeof result.error === "string" ? result.error.slice(0, 240) : "The voice draft could not be prepared. Please try again.");
-          replyToWorkspace({ type: "itx-voice-sale-result", requestId, transcript: result.transcript, draft: result.draft });
-        } catch {
-          sendVoiceError("The voice service could not be reached. Check your connection and try again.");
-        }
         return;
       }
 
