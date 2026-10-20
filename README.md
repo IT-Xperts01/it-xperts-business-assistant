@@ -6,7 +6,7 @@ This is a static Vercel site. Supabase handles authentication, business profiles
 
 Before using this version, open the Supabase project connected to Vercel and run `supabase/business_workspace_storage.sql` in the Supabase SQL Editor. It creates the workspace and recovery tables, enables row-level security, and limits each signed-in account to its own business records. It keeps one recovery copy per UTC day with changes and saves the current version before a restore. The app shows up to 30 recent recovery copies per workspace; older copies are not automatically deleted.
 
-The app will not open the business workspace if it cannot load and confirm recovery storage. After the SQL setup, deploy the clean ZIP to Vercel. Sign in, wait for the status to say **Saved to your account**, and make one test change; the status should then say **All changes saved**. The first saved workspace gets an initial recovery copy. Use fictional records until you have completed this pilot check.
+The app will not open the business workspace if it cannot load and confirm recovery storage. After the SQL setup is confirmed, open the live site and sign in. Wait for the status to say **Saved to your account** before entering records; subsequent edits should show **All changes saved**. The first saved workspace gets an initial recovery copy. Keep a downloaded backup for important records.
 
 ## Data handling
 
@@ -20,7 +20,7 @@ The app will not open the business workspace if it cannot load and confirm recov
 ## Deploy
 
 1. Run the SQL setup above in the Supabase project connected to this site.
-2. Deploy the provided clean ZIP as a static site to Vercel. It contains the website files and SQL setup, and excludes local Vercel authentication files. No build command is required; the site entry is `index.html`.
+2. The connected Vercel project deploys commits pushed to `main`; other branches create preview deployments. No build command is required; the site entry is `index.html`.
 3. If changing Supabase projects, update `config.js` with that project's URL and publishable key. Do not put secret keys in client files.
 4. Complete the pilot check above before inviting businesses to enter real records.
 
