@@ -267,7 +267,8 @@
       const description=[invoice.customer,invoice.description].filter(Boolean).join(' — ');
       addRow('Invoice',invoice.createdDate||invoice.paidDate||'',description,invoice.paymentMethod||'',invoice.amount??'','','','',invoice.status||'',invoice.note||'',JSON.stringify(invoice));
     });
-    if(state.todayTotal!==null&&state.todayTotal!==undefined)addRow('Daily sales total',today,'Total sales today','',state.todayTotal,'','','','Summary','','');
+    const dailyTotalAlreadyRecorded=(state.sales||[]).some(record=>record&&record.kind==='sale'&&record.name==='Daily sales total'&&record.dateKey===today);
+    if(state.todayTotal!==null&&state.todayTotal!==undefined&&!dailyTotalAlreadyRecorded)addRow('Daily sales total',today,'Total sales today','',state.todayTotal,'','','','Summary','','');
     const netWorthLabels={cash:'Cash',stock:'Stock',receivables:'Receivables',equipment:'Equipment',liabilities:'Liabilities'};
     Object.entries(state.netWorth||{}).forEach(([key,value])=>{
       addRow('Net worth',today,netWorthLabels[key]||key,'',value,'','','','', '',JSON.stringify({field:key,value:value}));
