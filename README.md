@@ -4,9 +4,17 @@ This is a static Vercel site. Supabase handles authentication, business profiles
 
 ## Required Supabase setup
 
-Before using this version, open the Supabase project connected to Vercel and run `supabase/business_workspace_storage.sql` in the Supabase SQL Editor. It creates the workspace and recovery tables, enables row-level security, and limits each signed-in account to its own business records. It keeps one recovery copy per UTC day with changes and saves the current version before a restore. The app shows up to 30 recent recovery copies per workspace; older copies are not automatically deleted.
+For a new Supabase project, run `supabase/business_workspace_storage.sql` in the SQL Editor, then run `supabase/restore_business_workspace.sql`. The first script creates the workspace and recovery tables, enables row-level security, and restricts each signed-in account to its own records. The second updates the recovery-copy uniqueness rule and installs an owner-checked, atomic restore operation for online recovery copies and downloaded JSON backups. For an existing project where the original storage script is already installed, run only `supabase/restore_business_workspace.sql`. The app shows up to 30 recent recovery copies; older copies are not automatically deleted.
 
-The app will not open the business workspace if it cannot load and confirm recovery storage. After the SQL setup is confirmed, open the live site and sign in. Wait for the status to say **Saved to your account** before entering records; subsequent edits should show **All changes saved**. The first saved workspace gets an initial recovery copy. Keep a downloaded backup for important records.
+The app will not open the business workspace if it cannot load and confirm recovery storage. With a dedicated test account and fictional records, confirm email sign-up, sign-in, saving, online restore, downloaded-backup restore (including invoice customer names and contact details), sign-out, and password reset. Wait for **All changes saved** after each write. Do not invite businesses to enter real records until this pilot is complete and the account-security and privacy handoff has been reviewed.
+
+## Go-live checklist
+
+- Rotate the Supabase secret used by the backup script and replace it in Apps Script Properties. Confirm a new backup succeeds, then revoke the old key. Keep all secret values out of this repository and chat.
+- Preserve the existing backup encryption passphrase or re-encrypt historical backups that must remain recoverable before changing it.
+- Turn on two-factor authentication for the Vercel account.
+- Have a Nigerian privacy professional review the Privacy notice and Terms of use before businesses enter real customer data.
+- Apply the restore migration and complete the fictional-record pilot above before inviting businesses.
 
 ## Data handling
 
@@ -19,7 +27,7 @@ The app will not open the business workspace if it cannot load and confirm recov
 
 ## Deploy
 
-1. Run the SQL setup above in the Supabase project connected to this site.
+1. Install the Supabase setup or update above in the project connected to this site.
 2. The connected Vercel project deploys commits pushed to `main`; other branches create preview deployments. No build command is required; the site entry is `index.html`.
 3. If changing Supabase projects, update `config.js` with that project's URL and publishable key. Do not put secret keys in client files.
 4. Complete the pilot check above before inviting businesses to enter real records.
