@@ -194,17 +194,32 @@
         .limit(30);
     }
 
-    async function workspaceBackupHasRecords(userId, backupId) {
-      if (!backupId) return false;
-      const { data, error } = await supabase.from("business_workspace_backups")
-        .select("data")
-        .eq("user_id", userId)
-        .eq("id", backupId)
-        .maybeSingle();
-      if (error) return null;
-      const saved = data?.data;
-      return ["sales", "expenses", "items", "invoices"].some(key => Array.isArray(saved?.[key]) && saved[key].length > 0)
-        || Object.values(saved?.netWorth ?? {}).some(value => Number(value) > 0);
+    function workspaceDataHasRecords(saved) {
+      if (!saved || typeof saved !== "object" || Array.isArray(saved)) return false;
+      const todayTotal = saved.todayTotal;
+      const dailyAmount = Number(todayTotal?.amount ?? todayTotal?.total ?? (typeof todayTotal === "number" ? todayTotal : 0));
+      return ["sales", "expenses", "items", "invoices"].some(key => Array.isArray(saved[key]) && saved[key].length > 0)
+        || dailyAmount > 0
+        || Object.values(saved.netWorth ?? {}).some(value => Number(value) > 0);
+    }
+
+    async function workspaceBackupsWithRecords(userId, backups) {
+      const idsWithRecords = [];
+      const batchSize = 5;
+      for (let offset = 0; offset < backups.length; offset += batchSize) {
+        const batch = backups.slice(offset, offset + batchSize);
+        const { data, error } = await supabase.from("business_workspace_backups")
+          .select("id,data")
+          .eq("user_id", userId)
+          .in("id", batch.map(backup => backup.id));
+        if (error) return null;
+        const recordsById = new Map((data ?? []).map(row => [String(row.id), row.data]));
+        for (const backup of batch) {
+          if (workspaceDataHasRecords(recordsById.get(String(backup.id)))) idsWithRecords.push(String(backup.id));
+        }
+        if (idsWithRecords.length) return idsWithRecords;
+      }
+      return idsWithRecords;
     }
 
     async function saveWorkspaceRecords(data, requestId) {
@@ -248,12 +263,12 @@
         if (error) return replyToWorkspace({ type: "itx-records-loaded", error: "Secure record storage is not ready. Please retry in a moment." });
         const backups = await recentWorkspaceBackups(activeUser.id);
         if (backups.error) return replyToWorkspace({ type: "itx-records-loaded", error: "Record recovery storage is not ready. Please retry in a moment." });
-        let latestBackupHasRecords = false;
-        if (workspace && backups.data?.length) {
-          latestBackupHasRecords = await workspaceBackupHasRecords(activeUser.id, backups.data[0].id);
-          if (latestBackupHasRecords === null) return replyToWorkspace({ type: "itx-records-loaded", error: "The latest recovery copy could not be checked. Please retry in a moment." });
+        let recoveryBackupIds = [];
+        if (backups.data?.length && (!workspace || !workspaceDataHasRecords(workspace.data))) {
+          recoveryBackupIds = await workspaceBackupsWithRecords(activeUser.id, backups.data);
+          if (recoveryBackupIds === null) return replyToWorkspace({ type: "itx-records-loaded", error: "Available recovery copies could not be checked. Please retry." });
         }
-        replyToWorkspace({ type: "itx-records-loaded", data: workspace?.data ?? null, savedAt: workspace?.updated_at ?? null, backups: backups.data ?? [], latestBackupHasRecords });
+        replyToWorkspace({ type: "itx-records-loaded", data: workspace?.data ?? null, savedAt: workspace?.updated_at ?? null, backups: backups.data ?? [], recoveryBackupIds });
         return;
       }
 
