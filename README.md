@@ -1,36 +1,88 @@
 # IT Xperts Business Assistant — Vercel deployment
 
-This is a static Vercel site. Supabase handles authentication, business profiles, and the business workspace records. The browser uses only the Supabase publishable key in `config.js`; never add a Supabase secret or service-role key to this folder.
+This is a static Vercel site. Supabase handles authentication, business profiles, and business workspace records. The browser uses only the Supabase publishable key in config.js. Never put a Supabase secret or service-role key in this repository or any browser file.
 
-## Required Supabase setup
+## Supabase setup
 
-For a new Supabase project, run `supabase/business_workspace_storage.sql` in the SQL Editor, then run `supabase/restore_business_workspace.sql`. The first script creates the workspace and recovery tables, enables row-level security, and restricts each signed-in account to its own records. The second updates the recovery-copy uniqueness rule and installs an owner-checked, atomic restore operation for online recovery copies and downloaded JSON backups. For an existing project where the original storage script is already installed, run only `supabase/restore_business_workspace.sql`. The app shows up to 30 recent recovery copies; older copies are not automatically deleted.
+For a new Supabase project, run supabase/business_workspace_storage.sql in the SQL Editor, then supabase/restore_business_workspace.sql. The first script creates the workspace and recovery tables, enables row-level security, and restricts each signed-in account to its own records. The second updates the recovery-copy uniqueness rule and installs an owner-checked, atomic restore operation for online recovery copies and downloaded JSON backups.
 
-The app will not open the business workspace if it cannot load and confirm recovery storage. With a dedicated test account and fictional records, confirm email sign-up, sign-in, saving, online restore, downloaded-backup restore (including invoice customer names and contact details), sign-out, and password reset. Wait for **All changes saved** after each write. Do not invite businesses to enter real records until this pilot is complete and the account-security and privacy handoff has been reviewed.
+For an existing project where the original storage script is already installed, run only supabase/restore_business_workspace.sql. The app shows up to 30 recent recovery copies; older copies are not automatically deleted.
 
-## Go-live checklist
+## Launch status — 23 October 2026
 
-- Rotate the Supabase secret used by the backup script and replace it in Apps Script Properties. Confirm a new backup succeeds, then revoke the old key. Keep all secret values out of this repository and chat.
-- Preserve the existing backup encryption passphrase or re-encrypt historical backups that must remain recoverable before changing it.
-- Turn on two-factor authentication for the Vercel account.
-- Have a Nigerian privacy professional review the Privacy notice and Terms of use before businesses enter real customer data.
-- Apply the restore migration and complete the fictional-record pilot above before inviting businesses.
+Completed:
+
+- The restore migration was applied to the connected Supabase project and authenticated restore was verified.
+- On the dedicated fictional test account, recovery detection found copies containing records. Restoring a copy brought back 2 sales, 2 expenses, and 1 product; those records remained after reload.
+- The restored sales and expenses show their saved dates, and monthly/yearly report totals include the restored records.
+- The owner confirmed the final live-site check passed.
+
+Still required before inviting businesses to enter real records:
+
+- Complete the owner security handoff below.
+- Have a qualified Nigerian data-protection professional review and approve the Privacy notice and Terms of use.
+- Complete the remaining end-to-end pilot checks below, including backup and restore paths.
+
+## Owner security handoff
+
+These steps require the IT Xperts account owner. Do not send passwords, keys, or encryption passphrases in chat, email, GitHub issues, or code.
+
+1. Protect administrator accounts. Turn on two-factor authentication for Vercel, Supabase, and the Google account that owns the Apps Script and backup Drive folder. Review who has access to each account.
+2. Rotate the credential used by the Apps Script backup job safely:
+   - Identify which Supabase credential the script currently uses without copying its value into this repository.
+   - Prefer a dedicated, least-privilege credential or a restricted server-side backup endpoint. A service-role key bypasses row-level security; if the current script requires one, keep it only in Apps Script Properties and restrict access to script editors.
+   - Configure the replacement credential in Apps Script Properties, run a backup, and verify that a new encrypted file appears in the private Drive folder.
+   - Test that the encrypted file can be recovered using fictional data. Revoke the old credential only after the replacement backup and recovery check succeed.
+3. Protect the backup key and files:
+   - Keep the existing encryption passphrase in a password manager controlled by the owner. Do not change it until historical backups that must remain recoverable have been re-encrypted and verified.
+   - Confirm the Google Drive backup folder is private and limited to people who need access. Do not share the folder publicly.
+   - Verify that the daily 02:00 Africa/Lagos Apps Script trigger exists, its latest execution succeeded, and the file is encrypted before it reaches Drive.
+4. Choose and document a retention and deletion schedule for Supabase recovery copies and Google Drive backups. The current Supabase setup does not automatically expire older copies, and account deletion does not automatically remove separate Drive files. Apply the chosen schedule only after the privacy professional confirms it.
+
+## End-to-end pilot checks
+
+Use a dedicated test account and fictional records only. Wait for All changes saved after every write.
+
+- Confirm email sign-up, sign-in, sign-out, and password reset on the production domain.
+- Create and reload a fictional business profile, product, sale, expense, and invoice; confirm the values remain under the same account.
+- Check daily, monthly, yearly, and all-record report totals, plus downloaded Excel and JSON exports.
+- Restore a Supabase recovery copy and a downloaded JSON backup. Confirm that the current records are preserved as a recovery copy before replacement. Include invoice customer names and contact details in the fictional test.
+- Confirm the daily encrypted Drive backup and perform a recovery check with fictional data before inviting real businesses.
+
+## Privacy and Terms review handoff
+
+The public Privacy notice and Terms are a preliminary draft, not a professional compliance sign-off. Before real customer information is entered, ask a qualified Nigerian data-protection professional or licensed Data Protection Compliance Organisation (DPCO) to review the documents and the actual data flows.
+
+The review should resolve and document:
+
+- The exact legal identity and business address of the operator, plus a reliable privacy-request contact.
+- IT Xperts’ roles for account data and support information, and the roles of each business customer and IT Xperts for customer details entered into invoices.
+- The specific purpose and lawful basis for each processing activity; the Terms checkbox should not be treated as a blanket privacy consent.
+- Each provider and recipient, the data each receives, and the applicable safeguards and lawful transfer mechanism for data stored or accessed outside Nigeria.
+- Retention periods and deletion procedures for account data, customer records, logs, Supabase recovery copies, and Google Drive backups, including what happens after account closure.
+- A workable route and response process for access, correction, objection, erasure and other rights requests, complaints, and security incidents.
+- Whether IT Xperts has any registration, DPO, DPIA, or compliance-audit obligations under the NDP Act and GAID 2025 for its actual scale and processing.
+
+Official references for the reviewer:
+
+- Nigeria Data Protection Act 2023: https://ndpc.gov.ng/download/nigeria-data-protection-act-2023
+- NDP Act General Application and Implementation Directive (GAID) 2025: https://ndpc.gov.ng/wp-content/uploads/2025/07/NDP-ACT-GAID-2025-MARCH-20TH.pdf
+- NDPC FAQs: https://ndpc.gov.ng/faqs/
 
 ## Data handling
 
 - Sales, expenses, products, invoices, and net-worth figures sync to one Supabase workspace row for the signed-in account.
-- Database row-level security checks the account ID for every workspace read or write. Recovery copies are readable by that account and are written by a database trigger.
-- The app keeps a temporary browser copy while a change is waiting to sync or when a save fails. It removes the copy after the cloud save succeeds. Use a password-protected device, and wait for the saved status before signing out or closing the page.
-- Settings lets each signed-in owner download a formatted Excel workbook of their own business records. It contains a performance overview with daily, monthly, yearly, and all-record totals, plus separate sales and expense ledgers, stock and services, invoices, and an estimated net-worth schedule. The automated summary is not an audited financial statement. A JSON backup remains available for restoring records, alongside online recovery copies.
-- A recovery copy is created when the workspace is first saved and once per day when its records change. Before a restore, the app also saves the current version. The app lists up to 30 recent recovery copies; the database keeps older copies until an owner chooses a retention policy.
-- Business profiles remain in `public.profiles`; their existing row-level security policies are still required.
+- Database row-level security checks the account ID for workspace reads and writes. Recovery copies are readable by that account and are written by a database trigger.
+- The app keeps a temporary browser copy while a change is waiting to sync or when a save fails. It removes the copy after the cloud save succeeds. Use a password-protected device and wait for the saved status before signing out or closing the page.
+- Settings lets each signed-in owner download a formatted Excel workbook of their business records. It includes daily, monthly, yearly, and all-record totals, sales and expense ledgers, stock and services, invoices, and an estimated net-worth schedule. This is not an audited financial statement. A JSON backup is also available for restoring records.
+- Recovery copies are created on initial save, once per day when records change, and before a restore. Up to 30 recent copies are shown in the app. Older copies remain in the database until an owner-defined retention policy is implemented.
+- Business profiles remain in public.profiles; their existing row-level security policies are still required.
 
 ## Deploy
 
 1. Install the Supabase setup or update above in the project connected to this site.
-2. The connected Vercel project deploys commits pushed to `main`; other branches create preview deployments. No build command is required; the site entry is `index.html`.
-3. If changing Supabase projects, update `config.js` with that project's URL and publishable key. Do not put secret keys in client files.
-4. Complete the pilot check above before inviting businesses to enter real records.
+2. Commits pushed to main deploy through the connected Vercel project; other branches create preview deployments. No build command is required; the site entry is index.html.
+3. If changing Supabase projects, update config.js with that project's URL and publishable key. Never put secret keys in client files.
+4. Complete the security handoff, privacy review, and end-to-end pilot before inviting businesses to enter real records.
 
 Generated report summaries open in the signed-in owner's configured email app as a draft. The owner must review and send the draft manually. Download the CSV report and attach it if the full transaction list is needed.
-
