@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c2340">
+  <meta name="description" content="Privacy notice for the IT Xperts Business Assistant.">
+  <title>Privacy notice | IT Xperts Business Assistant</title>
+  <style>
+    :root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#152a40;background:#f1f6fa;font-synthesis:none;text-rendering:optimizeLegibility}*{box-sizing:border-box}body{margin:0;font-size:18px;line-height:1.7}.top{padding:18px max(22px,calc((100% - 900px)/2));background:#102c4a;color:#fff}.top a{color:#fff;text-decoration:none;font-weight:750}.wrap{width:min(100% - 36px,900px);margin:38px auto 64px;padding:36px;background:#fff;border:1px solid #dce6ed;border-radius:18px;box-shadow:0 12px 36px #153b570d}h1{font-size:36px;line-height:1.2;letter-spacing:-.03em;margin:0 0 8px}h2{font-size:22px;line-height:1.35;margin:30px 0 8px}p,li{color:#334d60}ul{padding-left:24px}a{color:#11686c;text-underline-offset:3px}.muted{color:#657a8b;font-size:15px}.contact{padding:18px;background:#edf7f7;border-radius:12px}.back{display:inline-block;margin-top:22px;font-weight:650}@media(max-width:600px){body{font-size:17px}.wrap{margin:18px auto 36px;padding:24px 20px}h1{font-size:30px}h2{font-size:21px}}
+  </style>
+</head>
+<body>
+  <header class="top"><a href="/">IT Xperts Business Assistant</a></header>
+  <main class="wrap">
+    <h1>Privacy notice</h1>
+    <p class="muted">Last updated: 22 October 2026</p>
+    <p>This notice explains how IT Xperts (“we”, “us”) handles information when you use the IT Xperts Business Assistant. Please read it before entering real business or customer information.</p>
+
+    <h2>Information the app handles</h2>
+    <ul>
+      <li><b>Account information:</b> your email address and account identifiers used for sign-up, sign-in, email confirmation and password recovery. Supabase Auth handles your password; the app does not display or store it in business records.</li>
+      <li><b>Business profile:</b> business name, business category, optional category note and sales-recording preference.</li>
+      <li><b>Business records you enter:</b> products or services, quantities and prices, sales, expenses, notes, invoices, customer names and contact details you choose to add, and shop net-worth estimates.</li>
+      <li><b>Recovery and device data:</b> saved workspace recovery copies, and a temporary browser copy while changes are waiting to sync or when a save fails. A downloaded export is saved to the location you choose on your device.</li>
+      <li><b>Basic technical information:</b> hosting and service providers may receive connection and diagnostic information such as IP address, browser details and request logs when the app is used.</li>
+    </ul>
+
+    <h2>Why it is used</h2>
+    <p>We use this information to create and protect accounts, save and restore business records, calculate summaries, prepare reports, provide the app and respond to support requests. We do not use the records entered in the app to make lending, insurance or employment decisions.</p>
+
+    <h2>Where information is processed</h2>
+    <p>The website is hosted by Vercel. Supabase provides sign-in and the database used for profiles, business workspaces and recovery copies. The Supabase primary database for this app is configured in London, United Kingdom (eu-west-2), so business records are stored outside Nigeria. The app downloads the Supabase JavaScript library from esm.sh to connect to Supabase; the business records are sent to Supabase, not to esm.sh by this code. These providers may process technical information in other locations under their own service arrangements. Review their notices for more detail: <a href="https://vercel.com/legal/privacy-policy" target="_blank" rel="noopener">Vercel privacy policy</a>, <a href="https://supabase.com/privacy" target="_blank" rel="noopener">Supabase privacy policy</a> and <a href="https://esm.sh/" target="_blank" rel="noopener">esm.sh</a>.</p>
+    <p>Alongside Supabase recovery copies, a separate daily Google Apps Script backup job is configured for IT Xperts. A Supabase function encrypts the business data with AES-256 before the script receives it; the script writes the encrypted export to an IT Xperts-controlled Google Drive folder. This is a central backup folder, not each business owner’s personal Drive. Google is an additional cloud provider for those copies, and its services may process or store information outside Nigeria; see <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Google’s privacy policy</a>. The app’s restore screen uses Supabase recovery copies; a Drive backup must be retrieved by support. The backup job is intended to run daily, but no recovery copy is a guarantee that every record can always be restored.</p>
+
+    <h2>Email and WhatsApp actions</h2>
+    <p>Account confirmation and password-reset messages are delivered through Supabase Auth and its configured email delivery provider. Choosing “Email report” opens a draft in your device’s configured email app with a report summary addressed to your account email. The app does not send that draft; your email provider receives it if you choose to send it.</p>
+    <p>Choosing an invoice Share or Remind action opens WhatsApp with a prefilled message that can include the customer’s name, invoice description, amount and due date. WhatsApp receives the prefilled text when its link opens. Review the message and choose whether to send it. Do not include information you do not have permission to share.</p>
+
+    <h2>Storage, recovery and deletion</h2>
+    <p>Workspace records and recovery copies are associated with the signed-in account. The app creates an initial recovery copy, a daily copy when records change, and a copy before a restore. Recovery copies are not automatically expired under the current configuration; up to 30 recent copies are shown in the app. Keep a separate download for important records.</p>
+    <p>The app does not currently have a self-service account deletion button or a published automatic deletion schedule. Supabase recovery copies and separate encrypted Google Drive backup files are not automatically expired. Deleting a Supabase account does not automatically remove the separate Drive files. To request access, correction or deletion of account data and related backup files, contact support using the link below. We will verify the request and explain any records that must be retained by law or to resolve a security or service issue. Un-synced browser data may remain on the device until the save succeeds or the browser’s site data is cleared.</p>
+
+    <h2>Keeping information safe</h2>
+    <p>We use account authentication and database access controls intended to keep each business workspace available only to its account. No internet service can promise perfect security or uninterrupted access. Use a unique password, protect devices that stay signed in, sign out on shared devices, and wait for “All changes saved” before leaving the app.</p>
+
+    <h2>Your choices and rights</h2>
+    <p>Where the Nigeria Data Protection Act 2023 applies, you may have rights including access to your personal data, correction, objection, portability and erasure, subject to applicable limits. Contact us to make a request. You can also contact the <a href="https://ndpc.gov.ng/" target="_blank" rel="noopener">Nigeria Data Protection Commission</a> for information about your rights and complaints.</p>
+
+    <h2>Contact</h2>
+    <p class="contact">For privacy questions or data requests, message IT Xperts on <a href="https://wa.me/2348036085433?text=Hello%20IT%20Xperts%2C%20I%20have%20a%20privacy%20or%20data%20request." target="_blank" rel="noopener">WhatsApp at +234 803 608 5433</a>.</p>
+    <a class="back" href="/">Back to the app</a>
+  </main>
+</body>
+</html>

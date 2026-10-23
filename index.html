@@ -47,7 +47,7 @@
       const passwordMarkup = mode === "reset" ? "" : '<label for="password">Password</label><div class="password-wrap"><input id="password" name="password" type="password" autocomplete="' + (mode === "signup" ? "new-password" : "current-password") + '" ' + (mode === "signup" ? "minlength=8" : "") + ' required><button class="reveal" type="button" aria-label="Show password" aria-pressed="false">Show</button></div><p class="password-hint" ' + (mode === "signup" ? "" : "hidden") + '>Use a new, unique password. A password manager can generate a strong one.</p>' + (mode === "signin" ? '<button type="button" id="forgot" class="text-button">Forgot password?</button>' : "");
       const submitLabel = mode === "signup" ? "Create account" : mode === "reset" ? "Send reset link" : "Sign in";
       const backMarkup = mode === "reset" ? '<button type="button" id="back-signin" class="text-button">Back to sign in</button>' : "";
-      root.innerHTML = '<main class="auth-wrap"><section class="auth-card"><a class="brand" href="/" aria-label="IT Xperts home"><span class="brand-mark">IT</span><span><b>IT Xperts</b><small>Business Assistant</small></span></a><h1 id="auth-title">' + title + '</h1><p class="lead">' + lead + '</p>' + tabsMarkup + '<div id="notice" class="notice" role="status" hidden></div>' + confirmationMarkup + '<form id="auth-form" novalidate ' + (confirming ? "hidden" : "") + '><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" value="' + safe(authEmailDraft) + '" required placeholder="you@example.com">' + passwordMarkup + '<button id="submit" class="primary" type="submit">' + submitLabel + '</button>' + backMarkup + '</form><p class="fineprint" ' + (confirming ? "hidden" : "") + '><b>Business data protection.</b> Business records are saved to your signed-in account with access limited to that account. Keep your password private and sign out on shared devices. You can download a copy or restore a previous saved version in Settings.</p><p class="fineprint"><b>Need help?</b> <a href="https://wa.me/2348036085433?text=Hi%20IT%20Xperts%2C%20I%20need%20help%20with%20the%20Business%20Assistant." target="_blank" rel="noopener noreferrer">Chat with IT Xperts on WhatsApp · +234 803 608 5433</a></p></section></main>';
+      root.innerHTML = '<main class="auth-wrap"><section class="auth-card"><a class="brand" href="/" aria-label="IT Xperts home"><span class="brand-mark">IT</span><span><b>IT Xperts</b><small>Business Assistant</small></span></a><h1 id="auth-title">' + title + '</h1><p class="lead">' + lead + '</p>' + tabsMarkup + '<div id="notice" class="notice" role="status" hidden></div>' + confirmationMarkup + '<form id="auth-form" novalidate ' + (confirming ? "hidden" : "") + '><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" value="' + safe(authEmailDraft) + '" required placeholder="you@example.com">' + passwordMarkup + (mode === "signup" ? '<label class="consent" for="accept-terms"><input id="accept-terms" type="checkbox" required><span>I agree to the <a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms of use</a> and have read the <a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy notice</a>.</span></label>' : "") + '<button id="submit" class="primary" type="submit">' + submitLabel + '</button>' + backMarkup + '</form><p class="fineprint" ' + (confirming ? "hidden" : "") + '><b>Business data protection.</b> Business records are saved to your signed-in account with access limited to that account. Keep your password private and sign out on shared devices. You can download a copy or restore a previous saved version in Settings.</p><p class="fineprint"><b>Need help?</b> <a href="https://wa.me/2348036085433?text=Hi%20IT%20Xperts%2C%20I%20need%20help%20with%20the%20Business%20Assistant." target="_blank" rel="noopener noreferrer">Chat with IT Xperts on WhatsApp · +234 803 608 5433</a></p><nav class="policy-links" aria-label="Legal information"><a href="/privacy.html" target="_blank" rel="noopener noreferrer">Privacy notice</a><a href="/terms.html" target="_blank" rel="noopener noreferrer">Terms of use</a></nav></section></main>';
 
       const emailInput = document.getElementById("email");
       emailInput?.addEventListener("input", () => rememberAuthEmail(emailInput.value));
@@ -114,12 +114,13 @@
       rememberAuthEmail(email);
       const password = document.getElementById("password")?.value ?? "";
       const button = document.getElementById("submit");
+      if (mode === "signup" && !document.getElementById("accept-terms")?.checked) { setNotice("Please agree to the Terms of use and read the Privacy notice before creating an account.", "error"); document.getElementById("accept-terms")?.focus(); return; }
       button.disabled = true;
       button.textContent = "Please wait…";
       let result;
       if (mode === "signup") {
         if (password.length < 8) { button.disabled = false; button.textContent = "Create account"; return setNotice("Use at least 8 characters. If it is still rejected as weak, choose a longer, unique password.", "error"); }
-        result = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: location.origin } });
+        result = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: location.origin, data: { terms_version: "2026-10-22", terms_accepted_at: new Date().toISOString() } } });
         button.disabled = false;
         button.textContent = "Create account";
         if (result.error) return setNotice(readableAuthError(result.error), "error");
@@ -193,17 +194,32 @@
         .limit(30);
     }
 
-    async function workspaceBackupHasRecords(userId, backupId) {
-      if (!backupId) return false;
-      const { data, error } = await supabase.from("business_workspace_backups")
-        .select("data")
-        .eq("user_id", userId)
-        .eq("id", backupId)
-        .maybeSingle();
-      if (error) return null;
-      const saved = data?.data;
-      return ["sales", "expenses", "items", "invoices"].some(key => Array.isArray(saved?.[key]) && saved[key].length > 0)
-        || Object.values(saved?.netWorth ?? {}).some(value => Number(value) > 0);
+    function workspaceDataHasRecords(saved) {
+      if (!saved || typeof saved !== "object" || Array.isArray(saved)) return false;
+      const todayTotal = saved.todayTotal;
+      const dailyAmount = Number(todayTotal?.amount ?? todayTotal?.total ?? (typeof todayTotal === "number" ? todayTotal : 0));
+      return ["sales", "expenses", "items", "invoices"].some(key => Array.isArray(saved[key]) && saved[key].length > 0)
+        || dailyAmount > 0
+        || Object.values(saved.netWorth ?? {}).some(value => Number(value) > 0);
+    }
+
+    async function workspaceBackupsWithRecords(userId, backups) {
+      const idsWithRecords = [];
+      const batchSize = 5;
+      for (let offset = 0; offset < backups.length; offset += batchSize) {
+        const batch = backups.slice(offset, offset + batchSize);
+        const { data, error } = await supabase.from("business_workspace_backups")
+          .select("id,data")
+          .eq("user_id", userId)
+          .in("id", batch.map(backup => backup.id));
+        if (error) return null;
+        const recordsById = new Map((data ?? []).map(row => [String(row.id), row.data]));
+        for (const backup of batch) {
+          if (workspaceDataHasRecords(recordsById.get(String(backup.id)))) idsWithRecords.push(String(backup.id));
+        }
+        if (idsWithRecords.length) return idsWithRecords;
+      }
+      return idsWithRecords;
     }
 
     async function saveWorkspaceRecords(data, requestId) {
@@ -247,12 +263,12 @@
         if (error) return replyToWorkspace({ type: "itx-records-loaded", error: "Secure record storage is not ready. Please retry in a moment." });
         const backups = await recentWorkspaceBackups(activeUser.id);
         if (backups.error) return replyToWorkspace({ type: "itx-records-loaded", error: "Record recovery storage is not ready. Please retry in a moment." });
-        let latestBackupHasRecords = false;
-        if (workspace && backups.data?.length) {
-          latestBackupHasRecords = await workspaceBackupHasRecords(activeUser.id, backups.data[0].id);
-          if (latestBackupHasRecords === null) return replyToWorkspace({ type: "itx-records-loaded", error: "The latest recovery copy could not be checked. Please retry in a moment." });
+        let recoveryBackupIds = [];
+        if (backups.data?.length && (!workspace || !workspaceDataHasRecords(workspace.data))) {
+          recoveryBackupIds = await workspaceBackupsWithRecords(activeUser.id, backups.data);
+          if (recoveryBackupIds === null) return replyToWorkspace({ type: "itx-records-loaded", error: "Available recovery copies could not be checked. Please retry." });
         }
-        replyToWorkspace({ type: "itx-records-loaded", data: workspace?.data ?? null, savedAt: workspace?.updated_at ?? null, backups: backups.data ?? [], latestBackupHasRecords });
+        replyToWorkspace({ type: "itx-records-loaded", data: workspace?.data ?? null, savedAt: workspace?.updated_at ?? null, backups: backups.data ?? [], recoveryBackupIds });
         return;
       }
 
@@ -260,31 +276,26 @@
         return saveWorkspaceRecords(event.data.data, requestId);
       }
 
-      if (type === "itx-records-restore") {
-        const backupId = String(event.data.backupId ?? "");
-        if (!/^\d+$/.test(backupId)) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "That recovery copy could not be found." });
-        const { data: backup, error } = await supabase.from("business_workspace_backups")
-          .select("data")
-          .eq("user_id", activeUser.id)
-          .eq("id", backupId)
-          .maybeSingle();
-        if (error || !backup) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "That recovery copy could not be opened." });
-        const { data: currentWorkspace, error: currentError } = await supabase.from("business_workspaces")
-          .select("user_id")
-          .eq("user_id", activeUser.id)
-          .maybeSingle();
-        if (currentError) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "Your current workspace could not be checked. No records were changed." });
-        if (currentWorkspace) {
-          const { error: snapshotError } = await supabase.rpc("save_business_workspace_before_restore");
-          if (snapshotError) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "Your current records could not be protected before restore. No records were changed." });
+      if (type === "itx-records-restore" || type === "itx-records-restore-data") {
+        const args = {};
+        if (type === "itx-records-restore") {
+          const backupId = String(event.data.backupId ?? "");
+          if (!/^\d+$/.test(backupId)) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "That recovery copy could not be found." });
+          args.p_backup_id = backupId;
+        } else {
+          const restoreData = event.data.data;
+          if (!validWorkspaceData(restoreData) || !Array.isArray(restoreData.sales) || !Array.isArray(restoreData.expenses) || !Array.isArray(restoreData.items)) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "That downloaded backup is not valid. Your current records were not changed." });
+          args.p_data = restoreData;
         }
-        const { data: saved, error: saveError } = await supabase.from("business_workspaces")
-          .upsert({ user_id: activeUser.id, data: backup.data, updated_at: new Date().toISOString() }, { onConflict: "user_id" })
-          .select("updated_at")
-          .single();
-        if (saveError) return replyToWorkspace({ type: "itx-records-restored", requestId, error: "The recovery copy could not be restored. Your current records are still available." });
+        const { error: restoreError } = await supabase.rpc("restore_business_workspace", args);
+        if (restoreError) {
+          const missingRestore = /function|schema cache/i.test(String(restoreError.message ?? ""));
+          return replyToWorkspace({ type: "itx-records-restored", requestId, error: missingRestore ? "The secure restore update is not installed yet. Ask the administrator to apply the recovery update, then try again." : "The recovery copy could not be restored. Your current records are still available." });
+        }
+        const { data: saved, error: loadError } = await supabase.from("business_workspaces").select("data,updated_at").eq("user_id", activeUser.id).single();
+        if (loadError || !saved) return replyToWorkspace({ type: "itx-records-restored", requestId, restoreApplied: true, error: "The restore finished, but the updated records could not be reloaded. Refresh the page before making changes." });
         const latest = await recentWorkspaceBackups(activeUser.id);
-        replyToWorkspace({ type: "itx-records-restored", requestId, data: backup.data, savedAt: saved.updated_at, backups: latest.error ? [] : latest.data });
+        replyToWorkspace({ type: "itx-records-restored", requestId, data: saved.data, savedAt: saved.updated_at, backups: latest.error ? [] : latest.data });
         return;
       }
 
@@ -341,6 +352,12 @@
     .primary{min-height:52px;height:auto;font-size:17px}.fineprint,.password-hint{font-size:14px;line-height:1.6}.text-button{font-size:15px;min-height:40px}.notice{font-size:15px;line-height:1.55}
     .workspace-head{height:50px;font-size:15px;padding:0 16px}.workspace-head button{min-height:40px}.loading{font-size:17px}
     @media(max-width:520px){.auth-card{padding:28px 24px}.auth-card h1{font-size:27px}.lead{font-size:16px}}
+
+    .policy-links{display:flex;flex-wrap:wrap;gap:18px;margin-top:14px;font-size:15px}
+    .policy-links a,.consent a{color:#11686c;text-underline-offset:3px}
+    .auth-card label.consent{display:flex;align-items:flex-start;gap:10px;margin:16px 0 4px;color:#425b6e;font-size:15px;line-height:1.55;font-weight:500}
+    .consent input{width:20px;min-width:20px;height:20px;margin:2px 0 0;padding:0;accent-color:#128d92}
+    @media(max-width:520px){.auth-card label.consent{font-size:14px}}
   </style></head>
 <body><div id="root"><div class="loading">Loading IT Xperts…</div></div></body>
 </html>
