@@ -8,7 +8,7 @@ For a new Supabase project, run supabase/business_workspace_storage.sql in the S
 
 For an existing project where the original storage script is already installed, run only supabase/restore_business_workspace.sql. The app shows up to 30 recent recovery copies; older copies are not automatically deleted.
 
-## Launch status — 23 October 2026
+## Launch status — 25 October 2026
 
 Completed:
 
@@ -20,14 +20,14 @@ Completed:
 Still required before inviting businesses to enter real records:
 
 - Complete the owner security handoff below.
-- Have a qualified Nigerian data-protection professional review and approve the Privacy notice and Terms of use.
-- Complete the remaining end-to-end pilot checks below, including backup and restore paths.
+- The owner reports that a qualified Nigerian data-protection professional reviewed the current Privacy notice, Terms, real data flows, cross-border storage, and retention. Recheck the hosting disclosure with that professional before the Vercel-to-Netlify cutover.
+- Complete end-to-end checks on the Netlify preview and after the production-domain cutover, including authentication, records, exports, recovery, and backup paths.
 
 ## Owner security handoff
 
 These steps require the IT Xperts account owner. Do not send passwords, keys, or encryption passphrases in chat, email, GitHub issues, or code.
 
-1. Protect administrator accounts. Turn on two-factor authentication for Vercel, Supabase, and the Google account that owns the Apps Script and backup Drive folder. Review who has access to each account.
+1. Protect administrator accounts. Turn on two-factor authentication for Netlify, Supabase, and the Google account that owns the Apps Script and backup Drive folder. Keep Vercel protected until its production domain is detached and the project is no longer used. Review who has access to each account.
 2. Rotate the credential used by the Apps Script backup job safely:
    - Identify which Supabase credential the script currently uses without copying its value into this repository.
    - Prefer a dedicated, least-privilege credential or a restricted server-side backup endpoint. A service-role key bypasses row-level security; if the current script requires one, keep it only in Apps Script Properties and restrict access to script editors.
@@ -51,9 +51,9 @@ Use a dedicated test account and fictional records only. Wait for All changes sa
 
 ## Privacy and Terms review handoff
 
-The public Privacy notice and Terms are a preliminary draft, not a professional compliance sign-off. Before real customer information is entered, ask a qualified Nigerian data-protection professional or licensed Data Protection Compliance Organisation (DPCO) to review the documents and the actual data flows.
+The owner reports that a qualified Nigerian data-protection professional reviewed the current Privacy notice, Terms, actual data flows, cross-border storage, and retention handling. This hosting migration introduces Netlify as a new provider for website delivery and technical request information. Before the production-domain cutover, ask that professional to review the updated host disclosure and confirm whether any other wording needs to change.
 
-The review should resolve and document:
+The review should resolve and document any outstanding or changed items:
 
 - The exact legal identity and business address of the operator, plus a reliable privacy-request contact.
 - IT Xperts’ roles for account data and support information, and the roles of each business customer and IT Xperts for customer details entered into invoices.
@@ -80,9 +80,10 @@ Official references for the reviewer:
 
 ## Deploy
 
-1. Install the Supabase setup or update above in the project connected to this site.
-2. Commits pushed to main deploy through the connected Vercel project; other branches create preview deployments. No build command is required; the site entry is index.html.
-3. If changing Supabase projects, update config.js with that project's URL and publishable key. Never put secret keys in client files.
-4. Complete the security handoff, privacy review, and end-to-end pilot before inviting businesses to enter real records.
+1. The existing production site remains on Vercel until the owner verifies the Netlify preview and approves the custom-domain DNS cutover.
+2. Netlify deployment settings are in netlify.toml. Connect this GitHub repo, use main as the production branch, leave the build command blank, and use . as the publish directory. Follow HOSTING_MIGRATION.md for Supabase preview redirects, privacy review, DNS, and production checks.
+3. Supabase remains the app's authentication and data service. If changing Supabase projects, update config.js with that project's URL and publishable key. Never put secret keys in client files.
+4. The Netlify Free plan allows commercial projects but has a hard 300-credit monthly cap; sites pause when it is reached. Review current usage and plan limits before relying on Free for sustained public traffic.
+5. Complete the owner security handoff, host-disclosure review, and Netlify end-to-end checks before inviting businesses to enter real records.
 
 Generated report summaries open in the signed-in owner's configured email app as a draft. The owner must review and send the draft manually. Download the CSV report and attach it if the full transaction list is needed.
