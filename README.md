@@ -15,27 +15,26 @@ Completed:
 - The restore migration was applied to the connected Supabase project and authenticated restore was verified.
 - On the dedicated fictional test account, recovery detection found copies containing records. Restoring a copy brought back 2 sales, 2 expenses, and 1 product; those records remained after reload.
 - The restored sales and expenses show their saved dates, and monthly/yearly report totals include the restored records.
-- The owner confirmed the final live-site check passed.
+- Production sign-in was verified with the dedicated fictional test account. The workspace showed “Saved to your account” and “Ready to record”; Sales, Products & services, Expenses, Reports, and Settings & backup opened in read-only checks. The workspace currently contains 2 sales, 0 products, and 0 expenses.
 
 ## Production hosting status — 26 October 2026
 
-- PR #18 merged to main as commit fd08c151; PR #19 merged as commit 0e94afdd. Netlify publishes production from main.
+- PR #20 is published on `main` as commit `98610dd`. Netlify publishes production from `main`.
 - Netlify lists itxperts.group as the primary domain and www.itxperts.group as its redirect alias. The active Let’s Encrypt certificate covers both names.
-- Public DNS currently resolves the apex to Netlify and the www name to the Netlify site. A clean request to the apex with a unique query string loaded the app during this check.
-- The existing Codex browser profile still reports a redirect loop for the bare apex and www URLs. This is consistent with a cached redirect from the earlier www-primary setup; verify the bare canonical URL in a fresh browser profile before treating that client-side issue as closed.
+- Public DNS resolves the apex and `www` to Netlify. The apex with a unique query string loads the app, and the production test session opened the workspace.
+- The bare canonical URL `https://itxperts.group/` loaded successfully in Chrome Incognito on 26 October 2026. The redirect loop is isolated to the existing Codex browser profile and is consistent with stale cached redirect state; no Netlify domain change was needed.
 - Netlify serves the static site from the repository root, and pretty URL processing is disabled in netlify.toml.
-- The Supabase client uses location.origin for signup confirmation, resend, and password-reset callbacks. Confirm the current Supabase allowed-redirect list contains https://itxperts.group and any preview origins that should remain active.
+- The Supabase client uses `location.origin` for signup confirmation, resend, and password-reset callbacks. Supabase currently has Site URL `https://www.itxperts.group`; its allowlist includes `https://itxperts.group/**`, `https://www.itxperts.group`, the Netlify preview URL, and the old Vercel URL.
 - The live Privacy notice now identifies Netlify as production hosting and Vercel as a preview host. The corrected notice was visible on the production domain.
 - The owner reports that the privacy professional reviewed the current notice, Terms, data flows, cross-border storage, and retention. Keep that approval record with the current notice.
 - The owner reports MFA is enabled on Netlify, Google, and Supabase.
 
 ## Still required before declaring full public launch
 
-- Complete and observe sign-in, signup confirmation, and password reset on the production domain with the dedicated fictional test account. The visible production test tab still showed the sign-in form at the end of this check.
+- Production sign-in now passes. Still run fresh end-to-end checks for signup confirmation/resend and password reset on the production domain.
 - Rotate the Apps Script Supabase credential safely: configure a replacement in Apps Script Properties, verify an encrypted backup and fictional-data recovery, then revoke the previous credential.
-- Decrypt and restore one encrypted Google Drive backup with fictional data. The daily trigger is running, but successful file creation alone does not verify recovery.
+- A read-only inventory on 26 October found 23 Supabase recovery snapshots, none older than 90 days. The private automated-backup Drive folder contains seven encrypted files dated 20–26 October 2026; none are at the 90-day cutoff. Automatic expiry remains disabled, so no backups are currently being purged. Decrypt and restore one with fictional data. File creation alone does not verify recoverability.
 - Implement the selected 90-day retention rule for Supabase recovery copies and encrypted Drive files. Automatic expiry is not enabled, and no existing backups have been deleted. Get explicit approval before enabling deletion, then verify the cutoff and recovery behavior.
-- Recheck the canonical root URL in a clean browser profile; the current Codex browser profile retains a redirect loop on bare URLs.
 
 ## Owner security handoff
 
@@ -50,7 +49,7 @@ These steps require the IT Xperts account owner. Do not send passwords, keys, or
 3. Protect the backup key and files:
    - Keep the existing encryption passphrase in a password manager controlled by the owner. Do not change it until historical backups that must remain recoverable have been re-encrypted and verified.
    - Confirm the Google Drive backup folder is private and limited to people who need access. Do not share the folder publicly.
-   - The daily time-based trigger is set for 02:00–03:00 Africa/Lagos (GMT+01:00). The six scheduled runs from 21–26 October 2026 completed; the latest run logged an encrypted backup file, which was found in the private Drive backup folder. A decrypt-and-restore test is still required.
+   - The daily time-based trigger is set for 02:00–03:00 Africa/Lagos (GMT+01:00). Seven encrypted daily backup files dated 20–26 October 2026 are present in the private automated-backup folder. A decrypt-and-restore test is still required.
 4. Retention: the owner selected a 90-day period for Supabase recovery copies and encrypted Google Drive backups. Automatic expiry is not enabled. Existing copies remain in place until the owner explicitly approves enabling deletion after reviewing the implementation and the affected-copy count.
 
 ## End-to-end pilot checks
