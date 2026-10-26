@@ -1,6 +1,6 @@
-# IT Xperts Business Assistant — Vercel deployment
+# IT Xperts Business Assistant — Netlify deployment
 
-This is a static Vercel site. Supabase handles authentication, business profiles, and business workspace records. The browser uses only the Supabase publishable key in config.js. Never put a Supabase secret or service-role key in this repository or any browser file.
+This is a static Netlify site. Supabase handles authentication, business profiles, and business workspace records. The browser uses only the Supabase publishable key in config.js. Never put a Supabase secret or service-role key in this repository or any browser file.
 
 ## Supabase setup
 
@@ -26,7 +26,7 @@ Completed:
 
 Still required before the full public launch:
 
-- Complete the owner security handoff below. Netlify two-factor authentication is not enabled yet; verify MFA on Supabase and the Google backup account, rotate the Apps Script Supabase credential safely, and confirm encrypted backup and recovery.
+- Complete the owner security handoff below. Netlify two-factor authentication is enabled and verified on 26 October 2026. MFA on Supabase and the Google backup account remains unverified; rotate the Apps Script Supabase credential safely and confirm encrypted backup and recovery.
 - The owner reports that a qualified Nigerian data-protection professional reviewed the Privacy notice, Terms, actual data flows, cross-border storage, and retention. The new Netlify hosting disclosure in draft PR #16 still needs that professional's approval.
 - After the disclosure is approved, switch only the website DNS records to Netlify, wait for DNS verification and HTTPS, then rerun authentication, records, exports, recovery, and backup checks on the public domain.
 - The current retention instruction is to keep recovery copies until the retention policy is approved. Document and implement the final retention and deletion schedule before scaling beyond the pilot.
