@@ -22,7 +22,7 @@ Completed:
 - PR #20 is published on `main` as commit `98610dd`. Netlify publishes production from `main`.
 - Netlify lists itxperts.group as the primary domain and www.itxperts.group as its redirect alias. The active Let’s Encrypt certificate covers both names.
 - Public DNS resolves the apex and `www` to Netlify. The apex with a unique query string loads the app, and the production test session opened the workspace.
-- In the current Codex browser profile, the bare apex still fails with `ERR_TOO_MANY_REDIRECTS` and points to `www`. Netlify currently lists the apex as primary and `www` as a redirect alias, with an active certificate for both. Verify the bare canonical URL in a fresh browser profile before closing this issue; cached old redirects are a possible cause, not yet confirmed.
+- The bare canonical URL `https://itxperts.group/` loaded successfully in Chrome Incognito on 26 October 2026. The redirect loop is isolated to the existing Codex browser profile and is consistent with stale cached redirect state; no Netlify domain change was needed.
 - Netlify serves the static site from the repository root, and pretty URL processing is disabled in netlify.toml.
 - The Supabase client uses `location.origin` for signup confirmation, resend, and password-reset callbacks. Supabase currently has Site URL `https://www.itxperts.group`; its allowlist includes `https://itxperts.group/**`, `https://www.itxperts.group`, the Netlify preview URL, and the old Vercel URL.
 - The live Privacy notice now identifies Netlify as production hosting and Vercel as a preview host. The corrected notice was visible on the production domain.
@@ -35,7 +35,7 @@ Completed:
 - Rotate the Apps Script Supabase credential safely: configure a replacement in Apps Script Properties, verify an encrypted backup and fictional-data recovery, then revoke the previous credential.
 - A read-only inventory on 26 October found 23 Supabase recovery snapshots, none older than 90 days. The private automated-backup Drive folder contains seven encrypted files dated 20–26 October 2026; none are at the 90-day cutoff. Automatic expiry remains disabled, so no backups are currently being purged. Decrypt and restore one with fictional data. File creation alone does not verify recoverability.
 - Implement the selected 90-day retention rule for Supabase recovery copies and encrypted Drive files. Automatic expiry is not enabled, and no existing backups have been deleted. Get explicit approval before enabling deletion, then verify the cutoff and recovery behavior.
-- Recheck the canonical root URL in a clean browser profile; the current Codex browser profile retains a redirect loop on bare URLs.
+- Clear or bypass the stale redirect cache in the existing Codex browser profile if it is used for future checks; the canonical URL passed in Chrome Incognito.
 
 ## Owner security handoff
 
