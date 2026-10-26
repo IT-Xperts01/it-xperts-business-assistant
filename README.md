@@ -17,25 +17,27 @@ Completed:
 - The restored sales and expenses show their saved dates, and monthly/yearly report totals include the restored records.
 - The owner confirmed the final live-site check passed.
 
-## Current hosting migration status
+## Production hosting status — 26 October 2026
 
-- Hosting migration PR #15 is merged. Netlify has published the main branch at commit 53cd02c, and its production deploy completed successfully.
-- The public domain still points to Vercel. Netlify's entries for itxperts.group and www.itxperts.group are awaiting DNS verification; Netlify has not issued the custom-domain HTTPS certificate.
-- Supabase's Site URL remains https://www.itxperts.group. The allowed redirect list now also includes https://itxperts.group/**, with the existing Vercel and Netlify preview URLs retained.
-- Draft PR #16 updates the hosting disclosure. The privacy professional should approve that text before it is merged and before the public-domain cutover.
+- PR #18 merged to `main` as commit `fd08c151`. Netlify published production from that commit.
+- Netlify hosts the public site at `itxperts.group`; `www.itxperts.group` redirects to the apex domain. Both were observed loading over HTTPS after the production deploy.
+- Netlify pretty URL processing is disabled to prevent the prior custom-domain root redirect loop.
+- The Supabase client sends signup confirmation, resend, and password-reset callbacks to `location.origin`. The production origin is `https://itxperts.group`; keep it and any intended alternate origins in Supabase's allowed redirect list.
+- The Privacy notice is being corrected in this branch to identify Netlify as the production host and Vercel as a preview host.
 
-Still required before the full public launch:
+## Still required before declaring full public launch
 
-- Complete the owner security handoff below. Netlify MFA was verified on 26 October 2026 and Google 2-Step Verification for the backup account was verified on 27 October 2026. Supabase MFA, Apps Script credential rotation, and backup recovery testing remain.
-- The owner reports that a qualified Nigerian data-protection professional reviewed the Privacy notice, Terms, actual data flows, cross-border storage, and retention. The new Netlify hosting disclosure in draft PR #16 still needs that professional's approval.
-- After the disclosure is approved, switch only the website DNS records to Netlify, wait for DNS verification and HTTPS, then rerun authentication, records, exports, recovery, and backup checks on the public domain.
-- The current retention instruction is to keep recovery copies until the retention policy is approved. Document and implement the final retention and deletion schedule before scaling beyond the pilot.
+- Run signup confirmation and password reset end to end from `https://itxperts.group` using the dedicated test account and its inbox. Do not use a real business account for this check.
+- The owner has not confirmed rotation of the Apps Script Supabase credential. The script requires `ITX_SUPABASE_SECRET_KEY`; rotate it only after a replacement backup succeeds, then revoke the old value.
+- A daily encrypted Drive backup is verified below, but a decrypt-and-restore check of that encrypted file with fictional data remains outstanding.
+- The owner selected “keep copies until the retention policy is approved.” No automatic retention or deletion schedule is currently implemented. Approve a retention policy before claiming this item is closed; do not purge existing copies until that policy and implementation are approved.
+- The owner reports that a qualified Nigerian data-protection professional reviewed the Privacy notice, Terms, actual data flows, cross-border storage, and retention. The corrected production-host wording should be included in their current review record.
 
 ## Owner security handoff
 
 These steps require the IT Xperts account owner. Do not send passwords, keys, or encryption passphrases in chat, email, GitHub issues, or code.
 
-1. Protect administrator accounts. Netlify MFA and Google 2-Step Verification for the backup account are enabled. Enable MFA on Supabase; keep Vercel protected until its production domain is detached and the project is no longer used. Review who has access to each account.
+1. Protect administrator accounts. The owner reported that Netlify MFA, Google 2-Step Verification for the backup account, and Supabase MFA are enabled. Keep Vercel protected while its project remains accessible and review who has access to each account.
 2. Rotate the credential used by the Apps Script backup job safely:
    - Identify which Supabase credential the script currently uses without copying its value into this repository.
    - Prefer a dedicated, least-privilege credential or a restricted server-side backup endpoint. A service-role key bypasses row-level security; if the current script requires one, keep it only in Apps Script Properties and restrict access to script editors.
@@ -44,8 +46,8 @@ These steps require the IT Xperts account owner. Do not send passwords, keys, or
 3. Protect the backup key and files:
    - Keep the existing encryption passphrase in a password manager controlled by the owner. Do not change it until historical backups that must remain recoverable have been re-encrypted and verified.
    - Confirm the Google Drive backup folder is private and limited to people who need access. Do not share the folder publicly.
-   - Verify that the daily 02:00 Africa/Lagos Apps Script trigger exists, its latest execution succeeded, and the file is encrypted before it reaches Drive.
-4. Choose and document a retention and deletion schedule for Supabase recovery copies and Google Drive backups. The current Supabase setup does not automatically expire older copies, and account deletion does not automatically remove separate Drive files. Apply the chosen schedule only after the privacy professional confirms it.
+   - The daily time-based trigger is set for 02:00–03:00 Africa/Lagos (GMT+01:00). The six scheduled runs from 21–26 October 2026 completed; the latest run logged an encrypted backup file, which was found in the private Drive backup folder. A decrypt-and-restore test is still required.
+4. Retention: the owner selected “keep copies until the retention policy is approved.” Supabase recovery copies and Google Drive backup files do not automatically expire, and account deletion does not automatically remove separate Drive files. Agree and document the final schedule before scaling; do not delete existing copies until the owner approves a policy and the implementation is reviewed.
 
 ## End-to-end pilot checks
 
@@ -59,7 +61,7 @@ Use a dedicated test account and fictional records only. Wait for All changes sa
 
 ## Privacy and Terms review handoff
 
-The owner reports that a qualified Nigerian data-protection professional reviewed the current Privacy notice, Terms, actual data flows, cross-border storage, and retention handling. This hosting migration introduces Netlify as a new provider for website delivery and technical request information. Before the production-domain cutover, ask that professional to review the updated host disclosure and confirm whether any other wording needs to change.
+The owner reports that a qualified Nigerian data-protection professional reviewed the Privacy notice, Terms, actual data flows, cross-border storage, and retention handling. Netlify now serves the production website and receives technical request information; the corrected notice identifies Netlify as the production host and Vercel as a preview host. Keep the professional’s approval record aligned with this current wording.
 
 The review should resolve and document any outstanding or changed items:
 
@@ -88,10 +90,10 @@ Official references for the reviewer:
 
 ## Deploy
 
-1. The existing production site remains on Vercel until the owner verifies the Netlify preview and approves the custom-domain DNS cutover.
+1. Netlify is the current production host. Commits to the `main` branch publish automatically.
 2. Netlify deployment settings are in netlify.toml. Connect this GitHub repo, use main as the production branch, leave the build command blank, and use . as the publish directory. Follow HOSTING_MIGRATION.md for Supabase preview redirects, privacy review, DNS, and production checks.
 3. Supabase remains the app's authentication and data service. If changing Supabase projects, update config.js with that project's URL and publishable key. Never put secret keys in client files.
 4. The Netlify Free plan allows commercial projects but has a hard 300-credit monthly cap; sites pause when it is reached. Review current usage and plan limits before relying on Free for sustained public traffic.
-5. Complete the owner security handoff, host-disclosure review, and Netlify end-to-end checks before inviting businesses to enter real records.
+5. Complete the outstanding production auth, credential-rotation, encrypted-backup recovery, and retention-policy checks before declaring the full public launch ready.
 
 Generated report summaries open in the signed-in owner's configured email app as a draft. The owner must review and send the draft manually. Download the CSV report and attach it if the full transaction list is needed.
