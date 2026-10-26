@@ -1,6 +1,6 @@
-# IT Xperts Business Assistant — Vercel deployment
+# IT Xperts Business Assistant — Netlify deployment
 
-This is a static Vercel site. Supabase handles authentication, business profiles, and business workspace records. The browser uses only the Supabase publishable key in config.js. Never put a Supabase secret or service-role key in this repository or any browser file.
+This is a static Netlify site. Supabase handles authentication, business profiles, and business workspace records. The browser uses only the Supabase publishable key in config.js. Never put a Supabase secret or service-role key in this repository or any browser file.
 
 ## Supabase setup
 
@@ -8,7 +8,7 @@ For a new Supabase project, run supabase/business_workspace_storage.sql in the S
 
 For an existing project where the original storage script is already installed, run only supabase/restore_business_workspace.sql. The app shows up to 30 recent recovery copies; older copies are not automatically deleted.
 
-## Launch status — 25 October 2026
+## Launch status — 26 October 2026
 
 Completed:
 
@@ -17,17 +17,25 @@ Completed:
 - The restored sales and expenses show their saved dates, and monthly/yearly report totals include the restored records.
 - The owner confirmed the final live-site check passed.
 
-Still required before inviting businesses to enter real records:
+## Current hosting migration status
 
-- Complete the owner security handoff below.
-- The owner reports that a qualified Nigerian data-protection professional reviewed the current Privacy notice, Terms, real data flows, cross-border storage, and retention. Recheck the hosting disclosure with that professional before the Vercel-to-Netlify cutover.
-- Complete end-to-end checks on the Netlify preview and after the production-domain cutover, including authentication, records, exports, recovery, and backup paths.
+- Hosting migration PR #15 is merged. Netlify has published the main branch at commit 53cd02c, and its production deploy completed successfully.
+- The public domain still points to Vercel. Netlify's entries for itxperts.group and www.itxperts.group are awaiting DNS verification; Netlify has not issued the custom-domain HTTPS certificate.
+- Supabase's Site URL remains https://www.itxperts.group. The allowed redirect list now also includes https://itxperts.group/**, with the existing Vercel and Netlify preview URLs retained.
+- Draft PR #16 updates the hosting disclosure. The privacy professional should approve that text before it is merged and before the public-domain cutover.
+
+Still required before the full public launch:
+
+- Complete the owner security handoff below. Netlify MFA was verified on 26 October 2026 and Google 2-Step Verification for the backup account was verified on 27 October 2026. Supabase MFA, Apps Script credential rotation, and backup recovery testing remain.
+- The owner reports that a qualified Nigerian data-protection professional reviewed the Privacy notice, Terms, actual data flows, cross-border storage, and retention. The new Netlify hosting disclosure in draft PR #16 still needs that professional's approval.
+- After the disclosure is approved, switch only the website DNS records to Netlify, wait for DNS verification and HTTPS, then rerun authentication, records, exports, recovery, and backup checks on the public domain.
+- The current retention instruction is to keep recovery copies until the retention policy is approved. Document and implement the final retention and deletion schedule before scaling beyond the pilot.
 
 ## Owner security handoff
 
 These steps require the IT Xperts account owner. Do not send passwords, keys, or encryption passphrases in chat, email, GitHub issues, or code.
 
-1. Protect administrator accounts. Turn on two-factor authentication for Netlify, Supabase, and the Google account that owns the Apps Script and backup Drive folder. Keep Vercel protected until its production domain is detached and the project is no longer used. Review who has access to each account.
+1. Protect administrator accounts. Netlify MFA and Google 2-Step Verification for the backup account are enabled. Enable MFA on Supabase; keep Vercel protected until its production domain is detached and the project is no longer used. Review who has access to each account.
 2. Rotate the credential used by the Apps Script backup job safely:
    - Identify which Supabase credential the script currently uses without copying its value into this repository.
    - Prefer a dedicated, least-privilege credential or a restricted server-side backup endpoint. A service-role key bypasses row-level security; if the current script requires one, keep it only in Apps Script Properties and restrict access to script editors.
