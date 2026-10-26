@@ -26,7 +26,7 @@ Completed:
 
 Still required before the full public launch:
 
-- Complete the owner security handoff below. Netlify two-factor authentication is enabled and verified on 26 October 2026. MFA on Supabase and the Google backup account remains unverified; rotate the Apps Script Supabase credential safely and confirm encrypted backup and recovery.
+- Complete the owner security handoff below. Netlify MFA was verified on 26 October 2026 and Google 2-Step Verification for the backup account was verified on 27 October 2026. Supabase MFA, Apps Script credential rotation, and backup recovery testing remain.
 - The owner reports that a qualified Nigerian data-protection professional reviewed the Privacy notice, Terms, actual data flows, cross-border storage, and retention. The new Netlify hosting disclosure in draft PR #16 still needs that professional's approval.
 - After the disclosure is approved, switch only the website DNS records to Netlify, wait for DNS verification and HTTPS, then rerun authentication, records, exports, recovery, and backup checks on the public domain.
 - The current retention instruction is to keep recovery copies until the retention policy is approved. Document and implement the final retention and deletion schedule before scaling beyond the pilot.
@@ -35,7 +35,7 @@ Still required before the full public launch:
 
 These steps require the IT Xperts account owner. Do not send passwords, keys, or encryption passphrases in chat, email, GitHub issues, or code.
 
-1. Protect administrator accounts. Netlify two-factor authentication is enabled. Enable it on Supabase and the Google account that owns the Apps Script and backup Drive folder; keep Vercel protected until its production domain is detached and the project is no longer used. Review who has access to each account.
+1. Protect administrator accounts. Netlify MFA and Google 2-Step Verification for the backup account are enabled. Enable MFA on Supabase; keep Vercel protected until its production domain is detached and the project is no longer used. Review who has access to each account.
 2. Rotate the credential used by the Apps Script backup job safely:
    - Identify which Supabase credential the script currently uses without copying its value into this repository.
    - Prefer a dedicated, least-privilege credential or a restricted server-side backup endpoint. A service-role key bypasses row-level security; if the current script requires one, keep it only in Apps Script Properties and restrict access to script editors.
