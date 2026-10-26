@@ -1,6 +1,6 @@
 # Netlify hosting migration
 
-**Status:** Prepared for preview only. The live domain remains on Vercel until the owner approves the DNS cutover.
+**Status — 26 October 2026:** The owner has approved the DNS cutover, but it is not complete. Netlify published the main branch at commit 53cd02c. The public domain still points to Vercel, and Netlify is waiting for DNS verification before issuing HTTPS. Supabase's existing Site URL remains https://www.itxperts.group; the apex redirect https://itxperts.group/** has been added without removing earlier entries. Draft PR #16 updates the hosting disclosure and needs the privacy professional's approval before merge and domain cutover.
 
 ## What moves
 
@@ -37,9 +37,9 @@ The current Privacy notice names Vercel as the website host. Before production c
 
 Only after preview checks and the privacy update are approved:
 
-1. In Netlify, add both `www.itxperts.group` and `itxperts.group` under the site's domain settings. Keep `www.itxperts.group` as the primary address so the existing Supabase Site URL remains valid.
+1. Both domains are already added in Netlify. It currently lists `itxperts.group` as primary and redirects `www.itxperts.group` to it. Once DNS is verified and Netlify issues the certificate, set `www.itxperts.group` as primary to match the existing Supabase Site URL; Netlify currently blocks this change while waiting for DNS.
 2. Save the current DNS records and TTL values before making changes. Follow the exact DNS targets Netlify displays for these two hostnames; do not use guessed values.
-3. At the domain's DNS provider, change only the web records Netlify specifies. Leave all mail records (MX, SPF, DKIM, DMARC, and other email TXT records) untouched.
+3. At the DNS provider, change only the website records. On 26 October 2026, Netlify displayed an apex A fallback of `75.2.60.5` (preferred alternative: ALIAS/ANAME to `apex-loadbalancer.netlify.com`) and a `www` CNAME to `it-xperts-business-assistant-preview.netlify.app`. Current DNS still points the apex through `66.223.49.89` and `www` to Vercel's `2cc5a7c37db901cf.vercel-dns-017.com`. Leave all mail records (MX, SPF, DKIM, DMARC, and other email TXT records) untouched.
 4. Wait for Netlify to verify the domain and issue HTTPS certificates. Check that both the apex and `www` address resolve, with the apex redirecting to the primary `www` address.
 5. Keep the Vercel project intact while validating Netlify. After the owner confirms the custom-domain app works, remove the production domain from Vercel and stop using the Hobby project for the commercial app.
 
