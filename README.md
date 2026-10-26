@@ -33,7 +33,7 @@ Completed:
 
 - Production sign-in now passes. Still run fresh end-to-end checks for signup confirmation/resend and password reset on the production domain.
 - Rotate the Apps Script Supabase credential safely: configure a replacement in Apps Script Properties, verify an encrypted backup and fictional-data recovery, then revoke the previous credential.
-- The private automated-backup folder contains seven encrypted files dated 20–26 October 2026; the latest file was created on 26 October. Decrypt and restore one with fictional data. File creation alone does not verify recoverability.
+- A read-only inventory on 26 October found 23 Supabase recovery snapshots, none older than 90 days. The private automated-backup Drive folder contains seven encrypted files dated 20–26 October 2026; none are at the 90-day cutoff. Automatic expiry remains disabled, so no backups are currently being purged. Decrypt and restore one with fictional data. File creation alone does not verify recoverability.
 - Implement the selected 90-day retention rule for Supabase recovery copies and encrypted Drive files. Automatic expiry is not enabled, and no existing backups have been deleted. Get explicit approval before enabling deletion, then verify the cutoff and recovery behavior.
 - Recheck the canonical root URL in a clean browser profile; the current Codex browser profile retains a redirect loop on bare URLs.
 
