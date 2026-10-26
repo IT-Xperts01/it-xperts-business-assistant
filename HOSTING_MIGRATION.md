@@ -1,6 +1,6 @@
 # Netlify hosting migration
 
-**Status — 26 October 2026:** The owner has approved the DNS cutover, but it is not complete. Netlify published the main branch at commit 53cd02c. The public domain still points to Vercel, and Netlify is waiting for DNS verification before issuing HTTPS. Supabase's existing Site URL remains https://www.itxperts.group; the apex redirect https://itxperts.group/** has been added without removing earlier entries. Draft PR #16 updates the hosting disclosure and needs the privacy professional's approval before merge and domain cutover.
+**Status — 26 October 2026:** The owner has approved the DNS cutover, but it is not complete. Netlify published the main branch at commit 53cd02c. The public domain still points to Vercel, and Netlify reports **Pending External DNS verification** before issuing HTTPS. Supabase's existing Site URL remains https://www.itxperts.group; the apex redirect https://itxperts.group/** has been added without removing earlier entries. PR #16 is merged as b6289f9 and updates privacy.html. Its description says the Netlify-specific wording had not been approved at merge. Before the cutover, record the privacy professional's confirmation that their review covers the exact current Netlify disclosure.
 
 ## What moves
 
@@ -29,13 +29,20 @@ The app sends email confirmation and password reset links to the exact origin cu
 
 Do not copy user passwords or Supabase secrets into GitHub or chat.
 
-## 3. Review the hosting disclosure
+## 3. Obtain confirmation of the hosting disclosure
 
-The current Privacy notice names Vercel as the website host. Before production cutover, update it to name Netlify and link to [Netlify's Privacy Statement](https://www.netlify.com/privacy/). Have the privacy professional confirm the revised disclosure and whether any cross-border-transfer or retention wording changes are needed. Netlify can receive technical details such as visitor IP address and browser/device information; business records continue to go directly from the app to Supabase under the current design.
+The merged Privacy notice in privacy.html now says Vercel serves the current public website and Netlify hosts the preview and is configured to serve the public domain after DNS and HTTPS verification. It says the hosts may receive technical request information, while business records go directly from the browser to Supabase. It links Netlify's Privacy Statement.
+
+PR #16 was merged as b6289f9, but its description states that the Netlify-specific wording had not been approved for publication. Before cutover, send the exact current paragraph in privacy.html to the privacy professional and ask them to confirm:
+- The notice accurately describes Netlify's role and the technical information it may receive.
+- The Supabase business-record flow and cross-border storage statements remain accurate.
+- Any related transfer, retention, or deletion wording needs an update.
+
+Record the reviewer's name, role, date, and any required edits. Do not treat the PR merge itself as professional approval.
 
 ## 4. Move the custom domain
 
-Only after preview checks and the privacy update are approved:
+Only after preview checks pass and the privacy professional's approval of the exact current disclosure is recorded:
 
 1. Both domains are already added in Netlify. It currently lists `itxperts.group` as primary and redirects `www.itxperts.group` to it. Once DNS is verified and Netlify issues the certificate, set `www.itxperts.group` as primary to match the existing Supabase Site URL; Netlify currently blocks this change while waiting for DNS.
 2. Save the current DNS records and TTL values before making changes. Follow the exact DNS targets Netlify displays for these two hostnames; do not use guessed values.
@@ -49,4 +56,4 @@ If a Netlify deploy has a problem, roll back to the last known-good Netlify depl
 
 Use the dedicated fictional test account first. Check email confirmation/reset, sign-in and sign-out, creating and reloading a business profile/product/sale/expense/invoice, reports, downloads, recovery restore, and the next scheduled encrypted backup. Confirm Supabase still holds the same records after the hostname move.
 
-The owner must complete account MFA and the backup-credential rotation/recovery check listed in the main README before calling the app ready for full public launch.
+Netlify MFA, Google 2-Step Verification for the backup account, and Supabase account MFA have been confirmed. The owner must still complete the backup-credential rotation and recovery check listed in the main README before calling the app ready for full public launch.
