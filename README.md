@@ -8,7 +8,7 @@ For a new Supabase project, run supabase/business_workspace_storage.sql in the S
 
 For an existing project where the original storage script is already installed, run only supabase/restore_business_workspace.sql. The app shows up to 30 recent recovery copies; older copies are not automatically deleted.
 
-## Launch status — 25 October 2026
+## Launch status — 26 October 2026
 
 Completed:
 
@@ -17,11 +17,19 @@ Completed:
 - The restored sales and expenses show their saved dates, and monthly/yearly report totals include the restored records.
 - The owner confirmed the final live-site check passed.
 
-Still required before inviting businesses to enter real records:
+## Current hosting migration status
 
-- Complete the owner security handoff below.
-- The owner reports that a qualified Nigerian data-protection professional reviewed the current Privacy notice, Terms, real data flows, cross-border storage, and retention. Recheck the hosting disclosure with that professional before the Vercel-to-Netlify cutover.
-- Complete end-to-end checks on the Netlify preview and after the production-domain cutover, including authentication, records, exports, recovery, and backup paths.
+- Hosting migration PR #15 is merged. Netlify has published the main branch at commit 53cd02c, and its production deploy completed successfully.
+- The public domain still points to Vercel. Netlify's entries for itxperts.group and www.itxperts.group are awaiting DNS verification; Netlify has not issued the custom-domain HTTPS certificate.
+- Supabase's Site URL remains https://www.itxperts.group. The allowed redirect list now also includes https://itxperts.group/**, with the existing Vercel and Netlify preview URLs retained.
+- Draft PR #16 updates the hosting disclosure. The privacy professional should approve that text before it is merged and before the public-domain cutover.
+
+Still required before the full public launch:
+
+- Complete the owner security handoff below. Netlify two-factor authentication is not enabled yet; verify MFA on Supabase and the Google backup account, rotate the Apps Script Supabase credential safely, and confirm encrypted backup and recovery.
+- The owner reports that a qualified Nigerian data-protection professional reviewed the Privacy notice, Terms, actual data flows, cross-border storage, and retention. The new Netlify hosting disclosure in draft PR #16 still needs that professional's approval.
+- After the disclosure is approved, switch only the website DNS records to Netlify, wait for DNS verification and HTTPS, then rerun authentication, records, exports, recovery, and backup checks on the public domain.
+- The current retention instruction is to keep recovery copies until the retention policy is approved. Document and implement the final retention and deletion schedule before scaling beyond the pilot.
 
 ## Owner security handoff
 
