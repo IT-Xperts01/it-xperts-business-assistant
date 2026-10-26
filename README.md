@@ -6,7 +6,7 @@ This is a static Netlify site. Supabase handles authentication, business profile
 
 For a new Supabase project, run supabase/business_workspace_storage.sql in the SQL Editor, then supabase/restore_business_workspace.sql. The first script creates the workspace and recovery tables, enables row-level security, and restricts each signed-in account to its own records. The second updates the recovery-copy uniqueness rule and installs an owner-checked, atomic restore operation for online recovery copies and downloaded JSON backups.
 
-For an existing project where the original storage script is already installed, run only supabase/restore_business_workspace.sql. The app shows up to 30 recent recovery copies; older copies are not automatically deleted.
+For an existing project where the original storage script is already installed, run only supabase/restore_business_workspace.sql. The app shows up to 30 recent recovery copies. The owner selected a 90-day retention rule, but automatic expiry is not enabled and older copies remain.
 
 ## Launch status — 26 October 2026
 
@@ -19,19 +19,23 @@ Completed:
 
 ## Production hosting status — 26 October 2026
 
-- PR #18 merged to `main` as commit `fd08c151`. Netlify published production from that commit.
-- Netlify hosts the public site at `itxperts.group`; `www.itxperts.group` redirects to the apex domain. Both were observed loading over HTTPS after the production deploy.
-- Netlify pretty URL processing is disabled to prevent the prior custom-domain root redirect loop.
-- The Supabase client sends signup confirmation, resend, and password-reset callbacks to `location.origin`. The production origin is `https://itxperts.group`; keep it and any intended alternate origins in Supabase's allowed redirect list.
-- The Privacy notice is being corrected in this branch to identify Netlify as the production host and Vercel as a preview host.
+- PR #18 merged to main as commit fd08c151; PR #19 merged as commit 0e94afdd. Netlify publishes production from main.
+- Netlify lists itxperts.group as the primary domain and www.itxperts.group as its redirect alias. The active Let’s Encrypt certificate covers both names.
+- Public DNS currently resolves the apex to Netlify and the www name to the Netlify site. A clean request to the apex with a unique query string loaded the app during this check.
+- The existing Codex browser profile still reports a redirect loop for the bare apex and www URLs. This is consistent with a cached redirect from the earlier www-primary setup; verify the bare canonical URL in a fresh browser profile before treating that client-side issue as closed.
+- Netlify serves the static site from the repository root, and pretty URL processing is disabled in netlify.toml.
+- The Supabase client uses location.origin for signup confirmation, resend, and password-reset callbacks. Confirm the current Supabase allowed-redirect list contains https://itxperts.group and any preview origins that should remain active.
+- The live Privacy notice now identifies Netlify as production hosting and Vercel as a preview host. The corrected notice was visible on the production domain.
+- The owner reports that the privacy professional reviewed the current notice, Terms, data flows, cross-border storage, and retention. Keep that approval record with the current notice.
+- The owner reports MFA is enabled on Netlify, Google, and Supabase.
 
 ## Still required before declaring full public launch
 
-- Run signup confirmation and password reset end to end from `https://itxperts.group` using the dedicated test account and its inbox. Do not use a real business account for this check.
-- The owner has not confirmed rotation of the Apps Script Supabase credential. The script requires `ITX_SUPABASE_SECRET_KEY`; rotate it only after a replacement backup succeeds, then revoke the old value.
-- A daily encrypted Drive backup is verified below, but a decrypt-and-restore check of that encrypted file with fictional data remains outstanding.
-- The owner selected “keep copies until the retention policy is approved.” No automatic retention or deletion schedule is currently implemented. Approve a retention policy before claiming this item is closed; do not purge existing copies until that policy and implementation are approved.
-- The owner reports that a qualified Nigerian data-protection professional reviewed the Privacy notice, Terms, actual data flows, cross-border storage, and retention. The corrected production-host wording should be included in their current review record.
+- Complete and observe sign-in, signup confirmation, and password reset on the production domain with the dedicated fictional test account. The visible production test tab still showed the sign-in form at the end of this check.
+- Rotate the Apps Script Supabase credential safely: configure a replacement in Apps Script Properties, verify an encrypted backup and fictional-data recovery, then revoke the previous credential.
+- Decrypt and restore one encrypted Google Drive backup with fictional data. The daily trigger is running, but successful file creation alone does not verify recovery.
+- Implement the selected 90-day retention rule for Supabase recovery copies and encrypted Drive files. Automatic expiry is not enabled, and no existing backups have been deleted. Get explicit approval before enabling deletion, then verify the cutoff and recovery behavior.
+- Recheck the canonical root URL in a clean browser profile; the current Codex browser profile retains a redirect loop on bare URLs.
 
 ## Owner security handoff
 
@@ -47,7 +51,7 @@ These steps require the IT Xperts account owner. Do not send passwords, keys, or
    - Keep the existing encryption passphrase in a password manager controlled by the owner. Do not change it until historical backups that must remain recoverable have been re-encrypted and verified.
    - Confirm the Google Drive backup folder is private and limited to people who need access. Do not share the folder publicly.
    - The daily time-based trigger is set for 02:00–03:00 Africa/Lagos (GMT+01:00). The six scheduled runs from 21–26 October 2026 completed; the latest run logged an encrypted backup file, which was found in the private Drive backup folder. A decrypt-and-restore test is still required.
-4. Retention: the owner selected “keep copies until the retention policy is approved.” Supabase recovery copies and Google Drive backup files do not automatically expire, and account deletion does not automatically remove separate Drive files. Agree and document the final schedule before scaling; do not delete existing copies until the owner approves a policy and the implementation is reviewed.
+4. Retention: the owner selected a 90-day period for Supabase recovery copies and encrypted Google Drive backups. Automatic expiry is not enabled. Existing copies remain in place until the owner explicitly approves enabling deletion after reviewing the implementation and the affected-copy count.
 
 ## End-to-end pilot checks
 
@@ -93,7 +97,7 @@ Official references for the reviewer:
 1. Netlify is the current production host. Commits to the `main` branch publish automatically.
 2. Netlify deployment settings are in netlify.toml. Connect this GitHub repo, use main as the production branch, leave the build command blank, and use . as the publish directory. Follow HOSTING_MIGRATION.md for Supabase preview redirects, privacy review, DNS, and production checks.
 3. Supabase remains the app's authentication and data service. If changing Supabase projects, update config.js with that project's URL and publishable key. Never put secret keys in client files.
-4. The Netlify Free plan allows commercial projects but has a hard 300-credit monthly cap; sites pause when it is reached. Review current usage and plan limits before relying on Free for sustained public traffic.
+4. Review current Netlify plan terms, usage, and service limits before relying on the free plan for sustained public traffic.
 5. Complete the outstanding production auth, credential-rotation, encrypted-backup recovery, and retention-policy checks before declaring the full public launch ready.
 
 Generated report summaries open in the signed-in owner's configured email app as a draft. The owner must review and send the draft manually. Download the CSV report and attach it if the full transaction list is needed.
