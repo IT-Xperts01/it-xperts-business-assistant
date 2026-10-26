@@ -20,15 +20,16 @@ Completed:
 ## Current hosting migration status
 
 - Hosting migration PR #15 is merged. Netlify has published the main branch at commit 53cd02c, and its production deploy completed successfully.
-- The public domain still points to Vercel. Netlify's entries for itxperts.group and www.itxperts.group are awaiting DNS verification; Netlify has not issued the custom-domain HTTPS certificate.
-- Supabase's Site URL remains https://www.itxperts.group. The allowed redirect list now also includes https://itxperts.group/**, with the existing Vercel and Netlify preview URLs retained.
-- Draft PR #16 updates the hosting disclosure. The privacy professional should approve that text before it is merged and before the public-domain cutover.
+- Privacy-disclosure PR #16 is merged as `b6289f9`. The notice describes Vercel as the current public host and Netlify as the preview and target production host; business records continue to go directly to Supabase.
+- PR #16's description says the Netlify-specific wording had not been approved at merge. Record the privacy professional's confirmation that their review covers the exact current Netlify disclosure before the public-domain cutover.
+- The public domain still points to Vercel. Netlify's domain manager reports **Pending External DNS verification** for the custom domain, and its custom-domain HTTPS certificate has not been issued.
+- Supabase's Site URL remains https://www.itxperts.group. The allowed redirect list also includes https://itxperts.group/**, with the existing Vercel and Netlify preview URLs retained.
 
 Still required before the full public launch:
 
-- Complete the owner security handoff below. Netlify MFA was verified on 26 October 2026 and Google 2-Step Verification for the backup account was verified on 27 October 2026. Supabase MFA, Apps Script credential rotation, and backup recovery testing remain.
-- The owner reports that a qualified Nigerian data-protection professional reviewed the Privacy notice, Terms, actual data flows, cross-border storage, and retention. The new Netlify hosting disclosure in draft PR #16 still needs that professional's approval.
-- After the disclosure is approved, switch only the website DNS records to Netlify, wait for DNS verification and HTTPS, then rerun authentication, records, exports, recovery, and backup checks on the public domain.
+- Netlify MFA and Google 2-Step Verification for the backup account were previously confirmed. The owner has now confirmed Supabase account MFA is enabled. Complete the Apps Script credential rotation and backup recovery test in the owner security handoff below. Keep Vercel account security covered until its production domain is detached.
+- The owner reports that a qualified Nigerian data-protection professional reviewed the Privacy notice, Terms, data flows, cross-border storage, and retention. PR #16 merged a new Netlify hosting disclosure; its description records that the wording had not been approved at merge. Confirm that the professional has reviewed this exact wording and record the approval before DNS cutover.
+- After review of the exact disclosure is recorded, switch only the website DNS records to Netlify, wait for DNS verification and HTTPS, then rerun authentication, records, exports, recovery, and backup checks on the public domain.
 - The current retention instruction is to keep recovery copies until the retention policy is approved. Document and implement the final retention and deletion schedule before scaling beyond the pilot.
 
 ## Owner security handoff
